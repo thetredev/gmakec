@@ -1,0 +1,44 @@
+description: Own library linkage gomakec sample
+version: "1.0.0"
+
+compilers:
+  - name: gcc-default
+    path: gcc
+    flags:
+      - -Wall
+      - -Wextra
+      - -pedantic
+
+targets:
+  - compiler:
+      ref: gcc-default
+      flags:
+        - -c
+        - -fPIC
+    sources:
+      - ../mylib/mylib.c
+    includes:
+      - ../mylib
+    output: ../mylib/lib/myownlib.o
+
+  - compiler:
+      ref: gcc-default
+      flags:
+        - -shared
+        - -fPIC
+        - -Wl,-soname,libmyown.so
+        - -lc
+    sources:
+      - ../mylib/lib/myownlib.o
+    output: ../mylib/lib/libmyown.so
+
+  - compiler:
+      ref: gcc-default
+    sources:
+      - src/main.c
+    includes:
+      - ../mylib
+    links:
+      - path: ../mylib/lib
+        link: -lmyown
+    output: build/linked-with-mylib

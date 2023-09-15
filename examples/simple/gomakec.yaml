@@ -1,0 +1,16 @@
+description: Simple gomakec sample
+version: "1.0.0"
+
+targets:
+  - compiler:
+      path: gcc
+      flags:
+        - -Wall
+        - -Wextra
+        - -pedantic
+    sources:
+      - src/*.c
+    includes:
+      - include
+      - include/myinc
+    output: build/simple-example

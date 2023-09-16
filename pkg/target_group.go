@@ -1,6 +1,7 @@
 package gmakec
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,8 +15,10 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 	buildCommands := []string{}
 
 	for i := len(targetGroup.Targets) - 1; i >= 0; i-- {
-		index := targetGroup.Targets[i]
-		targetDef := globalDef.Targets[index]
+		targetIndex := targetGroup.Targets[i]
+		targetDef := globalDef.Targets[targetIndex]
+
+		targetDef.ExecuteHooks("preConfigure")
 
 		// merge compiler flags
 		compilerDef, err := targetDef.Compiler.WithRef(&globalDef.Compilers)
@@ -24,7 +27,11 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 			return nil, err
 		}
 
-		buildCommand := []string{compilerDef.Path}
+		buildCommand := []string{
+			fmt.Sprintf("%d", targetIndex),
+			compilerDef.Path,
+		}
+
 		buildCommand = append(buildCommand, compilerDef.Flags...)
 
 		for _, include := range targetDef.Includes {
@@ -77,6 +84,7 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 		}
 
 		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
+		targetDef.ExecuteHooks("postConfigure")
 	}
 
 	return buildCommands, nil

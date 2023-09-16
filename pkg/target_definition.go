@@ -15,6 +15,15 @@ type TargetDefinition struct {
 	Links        []LinkDefinition   `yaml:"links"`
 	Output       string             `yaml:"output"`
 	Dependencies []string           `yaml:"dependencies"`
+	Hooks        []TargetHook       `yaml:"hooks"`
+}
+
+func (targetDef *TargetDefinition) ExecuteHooks(step string) {
+	for _, targetHook := range targetDef.Hooks {
+		if targetHook.Step == step {
+			targetHook.Execute()
+		}
+	}
 }
 
 func (targetDef *TargetDefinition) FieldStringValue(fieldName string) (string, error) {

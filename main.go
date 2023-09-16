@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -123,15 +124,15 @@ func isConfigured(expectedFileCount int) (bool, error) {
 	return len(entries) == expectedFileCount, nil
 }
 
-func configure(context *cli.Context) error {
+func _configure() (*gmakec.GlobalDefinition, error) {
 	globalDef, err := parseYaml()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = sanitize(globalDef); err != nil {
-		return err
+		return nil, err
 	}
 
 	graphs := globalDef.GenerateDependencyGraphs()
@@ -140,11 +141,11 @@ func configure(context *cli.Context) error {
 	alreadyConfigured, err := isConfigured(len(targetGroupMatrix))
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if alreadyConfigured {
-		return nil
+		return nil, nil
 	}
 
 	if err = os.RemoveAll(CONFIGURE_DIR); err != nil {
@@ -152,7 +153,7 @@ func configure(context *cli.Context) error {
 	}
 
 	if err = os.MkdirAll(CONFIGURE_DIR, os.ModePerm); err != nil {
-		return err
+		return nil, err
 	}
 
 	for index, targetGroupIndices := range targetGroupMatrix {
@@ -162,15 +163,19 @@ func configure(context *cli.Context) error {
 
 		buildCommands, err := targetGroup.Configure(globalDef)
 
+		for _, targetIndex := range targetGroupIndices {
+			globalDef.Targets[targetIndex].ExecuteHooks("postConfigure")
+		}
+
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		filePath := fmt.Sprintf("%s/%d", CONFIGURE_DIR, index)
 		file, err := os.Create(filePath)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		defer file.Close()
@@ -179,17 +184,22 @@ func configure(context *cli.Context) error {
 			_, err = file.WriteString(fmt.Sprintf("%s\n", buildCommand))
 
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
-	return nil
+	return globalDef, nil
+}
+
+func configure(context *cli.Context) error {
+	_, err := _configure()
+	return err
 }
 
 // only GCC for now
 func build(context *cli.Context) error {
-	err := configure(context)
+	globalDef, err := _configure()
 
 	if err != nil {
 		return err
@@ -219,14 +229,24 @@ func build(context *cli.Context) error {
 				}
 
 				shellCommand := strings.Split(line, " ")
+				targetIndex, err := strconv.Atoi(shellCommand[0])
 
-				command := exec.Command(shellCommand[0], shellCommand[1:]...)
+				if err != nil {
+					log.Fatalf("ERROR: %s\n", err.Error())
+				}
+
+				targetDef := globalDef.Targets[targetIndex]
+				targetDef.ExecuteHooks("preBuild")
+
+				command := exec.Command(shellCommand[1], shellCommand[2:]...)
 				command.Stdout = os.Stdout
 				command.Stderr = os.Stderr
 
 				if err = command.Run(); err != nil {
 					log.Fatalf("ERROR: %s\n", err.Error())
 				}
+
+				targetDef.ExecuteHooks("postBuild")
 			}
 		}(strings.Split(string(bytes), "\n"))
 		return nil
@@ -277,7 +297,7 @@ func reconfigure(context *cli.Context) error {
 		return err
 	}
 
-	if err = configure(context); err != nil {
+	if _, err = _configure(); err != nil {
 		return err
 	}
 

@@ -15,6 +15,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const CONFIGURE_DIR string = ".gmakec"
+
 type CompilerDefinition struct {
 	Name  string   `yaml:"name"`
 	Ref   string   `yaml:"ref"`
@@ -108,8 +110,8 @@ type TargetGroup struct {
 	Targets []int
 }
 
-func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefinition) {
-	defer wg.Done()
+func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string, error) {
+	buildCommands := []string{}
 
 	for i := len(targetGroup.Targets) - 1; i >= 0; i-- {
 		index := targetGroup.Targets[i]
@@ -119,7 +121,7 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 		compilerDef, err := targetDef.Compiler.WithRef(&globalDef.Compilers)
 
 		if err != nil {
-			//return err
+			return nil, err
 		}
 
 		buildCommand := []string{compilerDef.Path}
@@ -139,27 +141,7 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 					linkPath, err = globalDef.RefTargetStringValue(linkPath, &targetDef)
 				}
 
-				fileInfo, err := os.Stat(linkPath)
-
-				if err != nil {
-					// handle error
-				}
-
-				if !fileInfo.IsDir() {
-					linkPath = filepath.Dir(linkPath)
-				}
-
-				fileInfo, err = os.Stat(linkPath)
-
-				if err != nil {
-					// handle error
-				}
-
-				if !fileInfo.IsDir() {
-					// handle error
-				}
-
-				buildCommand = append(buildCommand, linkPath)
+				buildCommand = append(buildCommand, filepath.Dir(linkPath))
 			}
 
 			buildCommand = append(buildCommand, link.Link)
@@ -169,7 +151,7 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 		buildCommand = append(buildCommand, targetDef.Output)
 
 		if err := os.MkdirAll(filepath.Dir(targetDef.Output), os.ModePerm); err != nil {
-			//return err
+			return nil, err
 		}
 
 		for _, source := range targetDef.Sources {
@@ -177,7 +159,7 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 				globbed, err := filepath.Glob(source)
 
 				if err != nil {
-					//return err
+					return nil, err
 				}
 
 				buildCommand = append(buildCommand, globbed...)
@@ -185,7 +167,7 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 				refStringValue, err := globalDef.RefTargetStringValue(source, &targetDef)
 
 				if err != nil {
-					// handle error
+					return nil, err
 				}
 
 				buildCommand = append(buildCommand, refStringValue)
@@ -194,14 +176,10 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 			}
 		}
 
-		command := exec.Command(buildCommand[0], buildCommand[1:]...)
-		command.Stdout = os.Stdout
-		command.Stderr = os.Stderr
-
-		if err = command.Run(); err != nil {
-			//return err
-		}
+		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
 	}
+
+	return buildCommands, nil
 }
 
 type GlobalDefinition struct {
@@ -332,8 +310,21 @@ func generateTargetGroupMatrix(graphs [][]int) [][]int {
 	return targetGroupMatrix
 }
 
-// only GCC for now
-func build(context *cli.Context) error {
+func isConfigured(expectedFileCount int) (bool, error) {
+	entries, err := os.ReadDir(CONFIGURE_DIR)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return len(entries) == expectedFileCount, nil
+}
+
+func configure(context *cli.Context) error {
 	globalDef, err := parseYaml()
 
 	if err != nil {
@@ -347,15 +338,99 @@ func build(context *cli.Context) error {
 	graphs := globalDef.GenerateDependencyGraphs()
 	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
-	for _, targetGroupIndices := range targetGroupMatrix {
-		var wg sync.WaitGroup
-		targetGroup := &TargetGroup{targetGroupIndices}
+	alreadyConfigured, err := isConfigured(len(targetGroupMatrix))
 
-		wg.Add(1)
-		go targetGroup.Build(&wg, globalDef)
-		wg.Wait()
+	if err != nil {
+		return err
 	}
 
+	if alreadyConfigured {
+		return nil
+	}
+
+	if err = os.RemoveAll(CONFIGURE_DIR); err != nil {
+		fmt.Printf("WARNING: could not remove directory %s: %s", CONFIGURE_DIR, err.Error())
+	}
+
+	if err = os.MkdirAll(CONFIGURE_DIR, os.ModePerm); err != nil {
+		return err
+	}
+
+	for index, targetGroupIndices := range targetGroupMatrix {
+		targetGroup := &TargetGroup{targetGroupIndices}
+		buildCommands, err := targetGroup.Configure(globalDef)
+
+		if err != nil {
+			return err
+		}
+
+		filePath := fmt.Sprintf("%s/%d", CONFIGURE_DIR, index)
+		file, err := os.Create(filePath)
+
+		if err != nil {
+			return err
+		}
+
+		defer file.Close()
+
+		for _, buildCommand := range buildCommands {
+			_, err = file.WriteString(fmt.Sprintf("%s\n", buildCommand))
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// only GCC for now
+func build(context *cli.Context) error {
+	err := configure(context)
+
+	if err != nil {
+		return err
+	}
+
+	var wg sync.WaitGroup
+
+	err = filepath.Walk(CONFIGURE_DIR, func(name string, info os.FileInfo, err error) error {
+		if name == CONFIGURE_DIR && info != nil && info.IsDir() {
+			return nil
+		}
+
+		bytes, err := os.ReadFile(name)
+
+		if err != nil {
+			return err
+		}
+
+		wg.Add(1)
+
+		go func(lines []string) {
+			defer wg.Done()
+
+			for _, line := range lines {
+				if len(line) == 0 {
+					continue
+				}
+
+				shellCommand := strings.Split(line, " ")
+
+				command := exec.Command(shellCommand[0], shellCommand[1:]...)
+				command.Stdout = os.Stdout
+				command.Stderr = os.Stderr
+
+				if err = command.Run(); err != nil {
+					log.Fatalf("ERROR: %s\n", err.Error())
+				}
+			}
+		}(strings.Split(string(bytes), "\n"))
+		return nil
+	})
+
+	wg.Wait()
 	return nil
 }
 
@@ -368,8 +443,12 @@ func clean(context *cli.Context) error {
 
 	for _, targetDef := range globalDef.Targets {
 		if err = os.RemoveAll(targetDef.Output); err != nil {
-			fmt.Printf("INFO: could not remove directory %s: %s", targetDef.Output, err.Error())
+			fmt.Printf("WARNING: could not remove directory %s: %s", targetDef.Output, err.Error())
 		}
+	}
+
+	if err = os.RemoveAll(CONFIGURE_DIR); err != nil {
+		fmt.Printf("WARNING: could not remove directory %s: %s", CONFIGURE_DIR, err.Error())
 	}
 
 	return nil
@@ -389,9 +468,28 @@ func rebuild(context *cli.Context) error {
 	return nil
 }
 
+func reconfigure(context *cli.Context) error {
+	var err error
+
+	if err = clean(context); err != nil {
+		return err
+	}
+
+	if err = configure(context); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
+			{
+				Name:   "configure",
+				Usage:  "configure the project",
+				Action: configure,
+			},
 			{
 				Name:   "build",
 				Usage:  "build the project",
@@ -401,6 +499,11 @@ func main() {
 				Name:   "clean",
 				Usage:  "rm -rf the output files",
 				Action: clean,
+			},
+			{
+				Name:   "reconfigure",
+				Usage:  "Shorthand for clean + configure",
+				Action: reconfigure,
 			},
 			{
 				Name:   "rebuild",

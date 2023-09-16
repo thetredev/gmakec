@@ -179,6 +179,19 @@ func parseYaml() (*GlobalDefinition, error) {
 	return &c, nil
 }
 
+func sanitize(globalDef *GlobalDefinition) error {
+	for index, compilerDef := range globalDef.Compilers {
+		if len(compilerDef.Path) == 0 {
+			return fmt.Errorf("Global compiler definition of name `%s` (index %d) need to have the field `path` set!", compilerDef.Name, index)
+		}
+		if len(compilerDef.Name) == 0 {
+			return fmt.Errorf("Global compiler definition with path `%s` (index %d) need to have the field `name` set!", compilerDef.Path, index)
+		}
+	}
+
+	return nil
+}
+
 // only GCC for now
 func build(cCtx *cli.Context) error {
 	c, err := parseYaml()
@@ -187,13 +200,8 @@ func build(cCtx *cli.Context) error {
 		return err
 	}
 
-	for index, compilerDef := range c.Compilers {
-		if len(compilerDef.Path) == 0 {
-			return fmt.Errorf("Global compiler definition of name `%s` (index %d) need to have the field `path` set!", compilerDef.Name, index)
-		}
-		if len(compilerDef.Name) == 0 {
-			return fmt.Errorf("Global compiler definition with path `%s` (index %d) need to have the field `name` set!", compilerDef.Path, index)
-		}
+	if err = sanitize(c); err != nil {
+		return err
 	}
 
 	graphs := [][]int{}

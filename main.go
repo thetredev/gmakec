@@ -189,7 +189,7 @@ func build(cCtx *cli.Context) error {
 
 	for index, compilerDef := range c.Compilers {
 		if len(compilerDef.Path) == 0 {
-			return fmt.Errorf("Global compiler definition of name `%s` need to have the field `path` set!", compilerDef.Name)
+			return fmt.Errorf("Global compiler definition of name `%s` (index %d) need to have the field `path` set!", compilerDef.Name, index)
 		}
 		if len(compilerDef.Name) == 0 {
 			return fmt.Errorf("Global compiler definition with path `%s` (index %d) need to have the field `name` set!", compilerDef.Path, index)

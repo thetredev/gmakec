@@ -9,227 +9,25 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/fatih/structs"
-	"github.com/urfave/cli/v2"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v2"
+
+	"github.com/urfave/cli/v2"
+
+	gmakec "github.com/thetredev/gmakec/pkg"
 )
 
 const CONFIGURE_DIR string = ".gmakec"
 const GLOBAL_DEFINITION_YAML string = "gmakec.yaml"
 
-type CompilerDefinition struct {
-	Name  string   `yaml:"name"`
-	Ref   string   `yaml:"ref"`
-	Path  string   `yaml:"path"`
-	Flags []string `yaml:"flags"`
-}
-
-func (compilerDef *CompilerDefinition) FindRef(globalCompilerDefs *[]CompilerDefinition) *CompilerDefinition {
-	for _, globalCompilerDef := range *globalCompilerDefs {
-		if globalCompilerDef.Name == compilerDef.Ref {
-			return &globalCompilerDef
-		}
-	}
-
-	return nil
-}
-
-func (compilerDef *CompilerDefinition) WithRef(globalCompilerDefs *[]CompilerDefinition) (*CompilerDefinition, error) {
-	if len(compilerDef.Ref) == 0 {
-		if len(compilerDef.Path) == 0 {
-			return nil, fmt.Errorf("Non-ref compiler definition of name `%s` need to have the field `path` set!", compilerDef.Name)
-		}
-
-		path, err := exec.LookPath(compilerDef.Path)
-
-		if err != nil {
-			return nil, fmt.Errorf("Non-ref compiler path `%s` not found!", compilerDef.Path)
-		}
-
-		compilerDef.Path = path
-		return compilerDef, nil
-	}
-
-	compilerRef := compilerDef.FindRef(globalCompilerDefs)
-
-	if compilerRef == nil {
-		return nil, fmt.Errorf("Could not find compiler ref: %s\n", compilerDef.Ref)
-	}
-
-	return &CompilerDefinition{
-		Name:  compilerRef.Name,
-		Path:  compilerRef.Path,
-		Flags: append(compilerRef.Flags, compilerDef.Flags...),
-	}, nil
-}
-
-type LinkDefinition struct {
-	Path string `yaml:"path"`
-	Link string `yaml:"link"`
-}
-
-type TargetDefinition struct {
-	Name         string             `yaml:"name"`
-	Compiler     CompilerDefinition `yaml:"compiler"`
-	Sources      []string           `yaml:"sources"`
-	Includes     []string           `yaml:"includes"`
-	Links        []LinkDefinition   `yaml:"links"`
-	Output       string             `yaml:"output"`
-	Dependencies []string           `yaml:"dependencies"`
-}
-
-func (targetDef *TargetDefinition) FieldStringValue(fieldName string) (string, error) {
-	fields := structs.Fields(targetDef)
-
-	for _, field := range fields {
-		tag := field.Tag("yaml")
-
-		if tag == fieldName {
-			return fmt.Sprintf("%s", field.Value()), nil
-		}
-	}
-
-	return "", fmt.Errorf("Could not find field `%s`", fieldName)
-}
-
-func (targetDef *TargetDefinition) DependencyGraph(index int, targetDefs *[]TargetDefinition) []int {
-	dependencyGraph := []int{index}
-
-	if len(targetDef.Dependencies) > 0 {
-		for i, otherTarget := range *targetDefs {
-			if slices.Contains(targetDef.Dependencies, otherTarget.Name) {
-				dependencyGraph = append(dependencyGraph, i)
-			}
-		}
-	}
-
-	return dependencyGraph
-}
-
-type TargetGroup struct {
-	Targets []int
-}
-
-func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string, error) {
-	buildCommands := []string{}
-
-	for i := len(targetGroup.Targets) - 1; i >= 0; i-- {
-		index := targetGroup.Targets[i]
-		targetDef := globalDef.Targets[index]
-
-		// merge compiler flags
-		compilerDef, err := targetDef.Compiler.WithRef(&globalDef.Compilers)
-
-		if err != nil {
-			return nil, err
-		}
-
-		buildCommand := []string{compilerDef.Path}
-		buildCommand = append(buildCommand, compilerDef.Flags...)
-
-		for _, include := range targetDef.Includes {
-			buildCommand = append(buildCommand, "-I")
-			buildCommand = append(buildCommand, include)
-		}
-
-		for _, link := range targetDef.Links {
-			if len(link.Path) > 0 {
-				buildCommand = append(buildCommand, "-L")
-				linkPath := link.Path
-
-				if strings.Contains(linkPath, ":") {
-					linkPath, err = globalDef.RefTargetStringValue(linkPath, &targetDef)
-				}
-
-				buildCommand = append(buildCommand, filepath.Dir(linkPath))
-			}
-
-			buildCommand = append(buildCommand, link.Link)
-		}
-
-		buildCommand = append(buildCommand, "-o")
-		buildCommand = append(buildCommand, targetDef.Output)
-
-		if err := os.MkdirAll(filepath.Dir(targetDef.Output), os.ModePerm); err != nil {
-			return nil, err
-		}
-
-		for _, source := range targetDef.Sources {
-			if strings.Contains(source, "*") {
-				globbed, err := filepath.Glob(source)
-
-				if err != nil {
-					return nil, err
-				}
-
-				buildCommand = append(buildCommand, globbed...)
-			} else if strings.Contains(source, ":") {
-				refStringValue, err := globalDef.RefTargetStringValue(source, &targetDef)
-
-				if err != nil {
-					return nil, err
-				}
-
-				buildCommand = append(buildCommand, refStringValue)
-			} else {
-				buildCommand = append(buildCommand, source)
-			}
-		}
-
-		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
-	}
-
-	return buildCommands, nil
-}
-
-type GlobalDefinition struct {
-	Description string               `yaml:"description"` // unused atm
-	Version     string               `yaml:"version"`     // unused atm
-	Compilers   []CompilerDefinition `yaml:"compilers"`
-	Targets     []TargetDefinition   `yaml:"targets"`
-}
-
-func (globalDef *GlobalDefinition) GenerateDependencyGraphs() [][]int {
-	graphs := [][]int{}
-
-	for index := range globalDef.Targets {
-		graphs = append(graphs, globalDef.Targets[index].DependencyGraph(index, &globalDef.Targets))
-	}
-
-	return graphs
-}
-
-func (globalDef *GlobalDefinition) FindRefTarget(targetName string) *TargetDefinition {
-	for index := range globalDef.Targets {
-		if globalDef.Targets[index].Name == targetName {
-			return &globalDef.Targets[index]
-		}
-	}
-
-	return nil
-}
-
-func (globalDef *GlobalDefinition) RefTargetStringValue(refString string, targetDef *TargetDefinition) (string, error) {
-	ref := strings.Split(refString, ":")
-	refTarget := globalDef.FindRefTarget(ref[0])
-	refFieldValue, err := refTarget.FieldStringValue(ref[1])
-
-	if err != nil {
-		return "", err
-	}
-
-	return refFieldValue, nil
-}
-
-func parseYaml() (*GlobalDefinition, error) {
+func parseYaml() (*gmakec.GlobalDefinition, error) {
 	yamlFile, err := os.ReadFile(GLOBAL_DEFINITION_YAML)
 
 	if err != nil {
 		return nil, err
 	}
 
-	globalDef := GlobalDefinition{}
+	globalDef := gmakec.GlobalDefinition{}
 	err = yaml.Unmarshal(yamlFile, &globalDef)
 
 	if err != nil {
@@ -239,7 +37,7 @@ func parseYaml() (*GlobalDefinition, error) {
 	return &globalDef, nil
 }
 
-func sanitize(globalDef *GlobalDefinition) error {
+func sanitize(globalDef *gmakec.GlobalDefinition) error {
 	for index, compilerDef := range globalDef.Compilers {
 		if len(compilerDef.Path) == 0 {
 			return fmt.Errorf("Global compiler definition of name `%s` (index %d) need to have the field `path` set!", compilerDef.Name, index)
@@ -358,7 +156,10 @@ func configure(context *cli.Context) error {
 	}
 
 	for index, targetGroupIndices := range targetGroupMatrix {
-		targetGroup := &TargetGroup{targetGroupIndices}
+		targetGroup := &gmakec.TargetGroup{
+			Targets: targetGroupIndices,
+		}
+
 		buildCommands, err := targetGroup.Configure(globalDef)
 
 		if err != nil {

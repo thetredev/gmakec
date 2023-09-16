@@ -179,14 +179,14 @@ func parseYaml() (*GlobalDefinition, error) {
 		return nil, err
 	}
 
-	c := GlobalDefinition{}
-	err = yaml.Unmarshal(yamlFile, &c)
+	globalDef := GlobalDefinition{}
+	err = yaml.Unmarshal(yamlFile, &globalDef)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &c, nil
+	return &globalDef, nil
 }
 
 func sanitize(globalDef *GlobalDefinition) error {
@@ -263,17 +263,17 @@ func generateTargetGroupMatrix(graphs [][]int) [][]int {
 
 // only GCC for now
 func build(cCtx *cli.Context) error {
-	c, err := parseYaml()
+	globalDef, err := parseYaml()
 
 	if err != nil {
 		return err
 	}
 
-	if err = sanitize(c); err != nil {
+	if err = sanitize(globalDef); err != nil {
 		return err
 	}
 
-	graphs := c.GenerateDependencyGraphs()
+	graphs := globalDef.GenerateDependencyGraphs()
 	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
 	for _, targetGroupIndices := range targetGroupMatrix {
@@ -281,7 +281,7 @@ func build(cCtx *cli.Context) error {
 		targetGroup := &TargetGroup{targetGroupIndices}
 
 		wg.Add(1)
-		go targetGroup.Build(&wg, c)
+		go targetGroup.Build(&wg, globalDef)
 		wg.Wait()
 	}
 
@@ -289,13 +289,13 @@ func build(cCtx *cli.Context) error {
 }
 
 func clean(cCtx *cli.Context) error {
-	c, err := parseYaml()
+	globalDef, err := parseYaml()
 
 	if err != nil {
 		return err
 	}
 
-	for _, targetDef := range c.Targets {
+	for _, targetDef := range globalDef.Targets {
 		if err = os.RemoveAll(targetDef.Output); err != nil {
 			fmt.Printf("INFO: could not remove directory %s: %s", targetDef.Output, err.Error())
 		}

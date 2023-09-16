@@ -162,6 +162,16 @@ type GlobalDefinition struct {
 	Targets     []TargetDefinition   `yaml:"targets"`
 }
 
+func (globalDef *GlobalDefinition) GenerateDependencyGraphs() [][]int {
+	graphs := [][]int{}
+
+	for index := range globalDef.Targets {
+		graphs = append(graphs, globalDef.Targets[index].TargetDependencyGraph(index, &globalDef.Targets))
+	}
+
+	return graphs
+}
+
 func parseYaml() (*GlobalDefinition, error) {
 	yamlFile, err := os.ReadFile("gomakec.yaml")
 
@@ -192,25 +202,8 @@ func sanitize(globalDef *GlobalDefinition) error {
 	return nil
 }
 
-// only GCC for now
-func build(cCtx *cli.Context) error {
-	c, err := parseYaml()
-
-	if err != nil {
-		return err
-	}
-
-	if err = sanitize(c); err != nil {
-		return err
-	}
-
-	graphs := [][]int{}
-
-	for index := range c.Targets {
-		graphs = append(graphs, c.Targets[index].TargetDependencyGraph(index, &c.Targets))
-	}
-
-	sortedGraphs := [][]int{}
+func generateTargetGroupMatrix(graphs [][]int) [][]int {
+	targetGroupMatrix := [][]int{}
 
 	for i := len(graphs) - 1; i >= 0; i-- {
 		graph := graphs[i]
@@ -242,11 +235,11 @@ func build(cCtx *cli.Context) error {
 		}
 
 		if slices.Compare(graph, mergedGraph) != 0 {
-			sortedGraphs = append(sortedGraphs, mergedGraph)
+			targetGroupMatrix = append(targetGroupMatrix, mergedGraph)
 		} else {
 			isRemainder := false
 
-			for _, sortedGraphItem := range sortedGraphs {
+			for _, sortedGraphItem := range targetGroupMatrix {
 				for _, mergedGraphIndex := range mergedGraph {
 					if slices.Contains(sortedGraphItem, mergedGraphIndex) {
 						isRemainder = true
@@ -260,14 +253,32 @@ func build(cCtx *cli.Context) error {
 			}
 
 			if !isRemainder {
-				sortedGraphs = append(sortedGraphs, mergedGraph)
+				targetGroupMatrix = append(targetGroupMatrix, mergedGraph)
 			}
 		}
 	}
 
-	for _, sortedGraph := range sortedGraphs {
+	return targetGroupMatrix
+}
+
+// only GCC for now
+func build(cCtx *cli.Context) error {
+	c, err := parseYaml()
+
+	if err != nil {
+		return err
+	}
+
+	if err = sanitize(c); err != nil {
+		return err
+	}
+
+	graphs := c.GenerateDependencyGraphs()
+	targetGroupMatrix := generateTargetGroupMatrix(graphs)
+
+	for _, targetGroupIndices := range targetGroupMatrix {
 		var wg sync.WaitGroup
-		targetGroup := &TargetGroup{sortedGraph}
+		targetGroup := &TargetGroup{targetGroupIndices}
 
 		wg.Add(1)
 		go targetGroup.Build(&wg, c)

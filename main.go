@@ -262,7 +262,7 @@ func generateTargetGroupMatrix(graphs [][]int) [][]int {
 }
 
 // only GCC for now
-func build(cCtx *cli.Context) error {
+func build(context *cli.Context) error {
 	globalDef, err := parseYaml()
 
 	if err != nil {
@@ -288,7 +288,7 @@ func build(cCtx *cli.Context) error {
 	return nil
 }
 
-func clean(cCtx *cli.Context) error {
+func clean(context *cli.Context) error {
 	globalDef, err := parseYaml()
 
 	if err != nil {
@@ -304,14 +304,14 @@ func clean(cCtx *cli.Context) error {
 	return nil
 }
 
-func rebuild(cCtx *cli.Context) error {
+func rebuild(context *cli.Context) error {
 	var err error
 
-	if err = clean(cCtx); err != nil {
+	if err = clean(context); err != nil {
 		return err
 	}
 
-	if err = build(cCtx); err != nil {
+	if err = build(context); err != nil {
 		return err
 	}
 

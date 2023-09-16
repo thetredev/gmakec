@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/fatih/structs"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v2"
@@ -75,6 +76,20 @@ type TargetDefinition struct {
 	Dependencies []string           `yaml:"dependencies"`
 }
 
+func (targetDef *TargetDefinition) FieldStringValue(fieldName string) (string, error) {
+	fields := structs.Fields(targetDef)
+
+	for _, field := range fields {
+		tag := field.Tag("yaml")
+
+		if tag == fieldName {
+			return fmt.Sprintf("%s", field.Value()), nil
+		}
+	}
+
+	return "", fmt.Errorf("Could not find field `%s`", fieldName)
+}
+
 func (targetDef *TargetDefinition) DependencyGraph(index int, targetDefs *[]TargetDefinition) []int {
 	dependencyGraph := []int{index}
 
@@ -118,7 +133,33 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 		for _, link := range targetDef.Links {
 			if len(link.Path) > 0 {
 				buildCommand = append(buildCommand, "-L")
-				buildCommand = append(buildCommand, link.Path)
+				linkPath := link.Path
+
+				if strings.Contains(linkPath, ":") {
+					linkPath, err = globalDef.RefTargetStringValue(linkPath, &targetDef)
+				}
+
+				fileInfo, err := os.Stat(linkPath)
+
+				if err != nil {
+					// handle error
+				}
+
+				if !fileInfo.IsDir() {
+					linkPath = filepath.Dir(linkPath)
+				}
+
+				fileInfo, err = os.Stat(linkPath)
+
+				if err != nil {
+					// handle error
+				}
+
+				if !fileInfo.IsDir() {
+					// handle error
+				}
+
+				buildCommand = append(buildCommand, linkPath)
 			}
 
 			buildCommand = append(buildCommand, link.Link)
@@ -140,6 +181,14 @@ func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefin
 				}
 
 				buildCommand = append(buildCommand, globbed...)
+			} else if strings.Contains(source, ":") {
+				refStringValue, err := globalDef.RefTargetStringValue(source, &targetDef)
+
+				if err != nil {
+					// handle error
+				}
+
+				buildCommand = append(buildCommand, refStringValue)
 			} else {
 				buildCommand = append(buildCommand, source)
 			}
@@ -170,6 +219,28 @@ func (globalDef *GlobalDefinition) GenerateDependencyGraphs() [][]int {
 	}
 
 	return graphs
+}
+
+func (globalDef *GlobalDefinition) FindRefTarget(targetName string) *TargetDefinition {
+	for index := range globalDef.Targets {
+		if globalDef.Targets[index].Name == targetName {
+			return &globalDef.Targets[index]
+		}
+	}
+
+	return nil
+}
+
+func (globalDef *GlobalDefinition) RefTargetStringValue(refString string, targetDef *TargetDefinition) (string, error) {
+	ref := strings.Split(refString, ":")
+	refTarget := globalDef.FindRefTarget(ref[0])
+	refFieldValue, err := refTarget.FieldStringValue(ref[1])
+
+	if err != nil {
+		return "", err
+	}
+
+	return refFieldValue, nil
 }
 
 func parseYaml() (*GlobalDefinition, error) {

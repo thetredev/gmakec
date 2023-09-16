@@ -37,7 +37,7 @@ targets:
         - -Wl,-soname,libmyown.so
         - -lc
     sources:
-      - ../mylib/lib/myownlib.o
+      - libobject:output
     output: ../mylib/lib/libmyown.so
     dependencies:
       - libobject
@@ -49,7 +49,7 @@ targets:
     includes:
       - ../mylib
     links:
-      - path: ../mylib/lib
+      - path: libso:output
         link: -lmyown
     output: build/linked-with-mylib
     dependencies:

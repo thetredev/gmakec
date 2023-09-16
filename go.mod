@@ -3,6 +3,7 @@ module github.com/thetredev/gmakec
 go 1.21.1
 
 require (
+	github.com/fatih/structs v1.1.0
 	github.com/urfave/cli/v2 v2.25.7
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	gopkg.in/yaml.v2 v2.4.0

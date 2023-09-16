@@ -304,6 +304,20 @@ func clean(cCtx *cli.Context) error {
 	return nil
 }
 
+func rebuild(cCtx *cli.Context) error {
+	var err error
+
+	if err = clean(cCtx); err != nil {
+		return err
+	}
+
+	if err = build(cCtx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
@@ -316,6 +330,11 @@ func main() {
 				Name:   "clean",
 				Usage:  "rm -rf the output files",
 				Action: clean,
+			},
+			{
+				Name:   "rebuild",
+				Usage:  "Shorthand for clean + build",
+				Action: rebuild,
 			},
 		},
 	}

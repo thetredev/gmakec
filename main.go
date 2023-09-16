@@ -75,7 +75,7 @@ type TargetDefinition struct {
 	Dependencies []string           `yaml:"dependencies"`
 }
 
-func (targetDef *TargetDefinition) TargetDependencyGraph(index int, targetDefs *[]TargetDefinition) []int {
+func (targetDef *TargetDefinition) DependencyGraph(index int, targetDefs *[]TargetDefinition) []int {
 	dependencyGraph := []int{index}
 
 	if len(targetDef.Dependencies) > 0 {
@@ -166,7 +166,7 @@ func (globalDef *GlobalDefinition) GenerateDependencyGraphs() [][]int {
 	graphs := [][]int{}
 
 	for index := range globalDef.Targets {
-		graphs = append(graphs, globalDef.Targets[index].TargetDependencyGraph(index, &globalDef.Targets))
+		graphs = append(graphs, globalDef.Targets[index].DependencyGraph(index, &globalDef.Targets))
 	}
 
 	return graphs

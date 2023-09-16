@@ -12,6 +12,13 @@ compilers:
 targets:
   - compiler:
       ref: gcc-default
+    sources:
+      - ../independent/main.c
+    output: build/independent
+
+  - name: libobject
+    compiler:
+      ref: gcc-default
       flags:
         - -c
         - -fPIC
@@ -21,7 +28,8 @@ targets:
       - ../mylib
     output: ../mylib/lib/myownlib.o
 
-  - compiler:
+  - name: libso
+    compiler:
       ref: gcc-default
       flags:
         - -shared
@@ -31,6 +39,8 @@ targets:
     sources:
       - ../mylib/lib/myownlib.o
     output: ../mylib/lib/libmyown.so
+    dependencies:
+      - libobject
 
   - compiler:
       ref: gcc-default
@@ -42,3 +52,5 @@ targets:
       - path: ../mylib/lib
         link: -lmyown
     output: build/linked-with-mylib
+    dependencies:
+      - libso

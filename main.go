@@ -7,8 +7,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v2"
 )
 
@@ -64,51 +66,45 @@ type LinkDefinition struct {
 }
 
 type TargetDefinition struct {
-	Compiler CompilerDefinition `yaml:"compiler"`
-	Sources  []string           `yaml:"sources"`
-	Includes []string           `yaml:"includes"`
-	Links    []LinkDefinition   `yaml:"links"`
-	Output   string             `yaml:"output"`
+	Name         string             `yaml:"name"`
+	Compiler     CompilerDefinition `yaml:"compiler"`
+	Sources      []string           `yaml:"sources"`
+	Includes     []string           `yaml:"includes"`
+	Links        []LinkDefinition   `yaml:"links"`
+	Output       string             `yaml:"output"`
+	Dependencies []string           `yaml:"dependencies"`
 }
 
-type GlobalDefinition struct {
-	Description string               `yaml:"description"` // unused atm
-	Version     string               `yaml:"version"`     // unused atm
-	Compilers   []CompilerDefinition `yaml:"compilers"`
-	Targets     []TargetDefinition   `yaml:"targets"`
-}
+func (targetDef *TargetDefinition) TargetDependencyGraph(index int, targetDefs *[]TargetDefinition) []int {
+	dependencyGraph := []int{index}
 
-// only GCC for now
-func build(cCtx *cli.Context) error {
-	yamlFile, err := os.ReadFile("gomakec.yaml")
-
-	if err != nil {
-		return err
-	}
-
-	c := &GlobalDefinition{}
-	err = yaml.Unmarshal(yamlFile, &c)
-
-	if err != nil {
-		return err
-	}
-
-	for index, compilerDef := range c.Compilers {
-		if len(compilerDef.Path) == 0 {
-			return fmt.Errorf("Global compiler definition of name `%s` need to have the field `path` set!", compilerDef.Name)
-		}
-		if len(compilerDef.Name) == 0 {
-			return fmt.Errorf("Global compiler definition with path `%s` (index %d) need to have the field `name` set!", compilerDef.Path, index)
+	if len(targetDef.Dependencies) > 0 {
+		for i, otherTarget := range *targetDefs {
+			if slices.Contains(targetDef.Dependencies, otherTarget.Name) {
+				dependencyGraph = append(dependencyGraph, i)
+			}
 		}
 	}
 
-	for _, targetDef := range c.Targets {
+	return dependencyGraph
+}
+
+type TargetGroup struct {
+	Targets []int
+}
+
+func (targetGroup *TargetGroup) Build(wg *sync.WaitGroup, globalDef *GlobalDefinition) {
+	defer wg.Done()
+
+	for i := len(targetGroup.Targets) - 1; i >= 0; i-- {
+		index := targetGroup.Targets[i]
+		targetDef := globalDef.Targets[index]
+
 		// merge compiler flags
-		var compilerDef *CompilerDefinition
-		compilerDef, err = targetDef.Compiler.WithRef(&c.Compilers)
+		compilerDef, err := targetDef.Compiler.WithRef(&globalDef.Compilers)
 
 		if err != nil {
-			return err
+			//return err
 		}
 
 		buildCommand := []string{compilerDef.Path}
@@ -132,7 +128,7 @@ func build(cCtx *cli.Context) error {
 		buildCommand = append(buildCommand, targetDef.Output)
 
 		if err := os.MkdirAll(filepath.Dir(targetDef.Output), os.ModePerm); err != nil {
-			return err
+			//return err
 		}
 
 		for _, source := range targetDef.Sources {
@@ -140,7 +136,7 @@ func build(cCtx *cli.Context) error {
 				globbed, err := filepath.Glob(source)
 
 				if err != nil {
-					return err
+					//return err
 				}
 
 				buildCommand = append(buildCommand, globbed...)
@@ -153,7 +149,121 @@ func build(cCtx *cli.Context) error {
 		command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
 
-		command.Run()
+		if err = command.Run(); err != nil {
+			//return err
+		}
+	}
+}
+
+type GlobalDefinition struct {
+	Description string               `yaml:"description"` // unused atm
+	Version     string               `yaml:"version"`     // unused atm
+	Compilers   []CompilerDefinition `yaml:"compilers"`
+	Targets     []TargetDefinition   `yaml:"targets"`
+}
+
+func parseYaml() (*GlobalDefinition, error) {
+	yamlFile, err := os.ReadFile("gomakec.yaml")
+
+	if err != nil {
+		return nil, err
+	}
+
+	c := GlobalDefinition{}
+	err = yaml.Unmarshal(yamlFile, &c)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+// only GCC for now
+func build(cCtx *cli.Context) error {
+	c, err := parseYaml()
+
+	if err != nil {
+		return err
+	}
+
+	for index, compilerDef := range c.Compilers {
+		if len(compilerDef.Path) == 0 {
+			return fmt.Errorf("Global compiler definition of name `%s` need to have the field `path` set!", compilerDef.Name)
+		}
+		if len(compilerDef.Name) == 0 {
+			return fmt.Errorf("Global compiler definition with path `%s` (index %d) need to have the field `name` set!", compilerDef.Path, index)
+		}
+	}
+
+	graphs := [][]int{}
+
+	for index := range c.Targets {
+		graphs = append(graphs, c.Targets[index].TargetDependencyGraph(index, &c.Targets))
+	}
+
+	sortedGraphs := [][]int{}
+
+	for i := len(graphs) - 1; i >= 0; i-- {
+		graph := graphs[i]
+		mergedGraph := graph
+
+		for _, graphIndex := range graph {
+			for j, outerGraph := range graphs {
+				if i == j {
+					break
+				}
+
+				found := false
+
+				for _, outerGraphIndex := range outerGraph {
+					toAdd := -1
+
+					if graphIndex == outerGraphIndex {
+						found = true
+						toAdd = graphIndex
+					} else if found {
+						toAdd = outerGraphIndex
+					}
+
+					if toAdd > -1 && !slices.Contains(mergedGraph, toAdd) {
+						mergedGraph = append(mergedGraph, toAdd)
+					}
+				}
+			}
+		}
+
+		if slices.Compare(graph, mergedGraph) != 0 {
+			sortedGraphs = append(sortedGraphs, mergedGraph)
+		} else {
+			isRemainder := false
+
+			for _, sortedGraphItem := range sortedGraphs {
+				for _, mergedGraphIndex := range mergedGraph {
+					if slices.Contains(sortedGraphItem, mergedGraphIndex) {
+						isRemainder = true
+						break
+					}
+				}
+
+				if isRemainder {
+					break
+				}
+			}
+
+			if !isRemainder {
+				sortedGraphs = append(sortedGraphs, mergedGraph)
+			}
+		}
+	}
+
+	for _, sortedGraph := range sortedGraphs {
+		var wg sync.WaitGroup
+		targetGroup := &TargetGroup{sortedGraph}
+
+		wg.Add(1)
+		go targetGroup.Build(&wg, c)
+		wg.Wait()
 	}
 
 	return nil

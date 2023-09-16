@@ -269,6 +269,22 @@ func build(cCtx *cli.Context) error {
 	return nil
 }
 
+func clean(cCtx *cli.Context) error {
+	c, err := parseYaml()
+
+	if err != nil {
+		return err
+	}
+
+	for _, targetDef := range c.Targets {
+		if err = os.RemoveAll(targetDef.Output); err != nil {
+			fmt.Printf("INFO: could not remove directory %s: %s", targetDef.Output, err.Error())
+		}
+	}
+
+	return nil
+}
+
 func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
@@ -276,6 +292,11 @@ func main() {
 				Name:   "build",
 				Usage:  "build the project",
 				Action: build,
+			},
+			{
+				Name:   "clean",
+				Usage:  "rm -rf the output files",
+				Action: clean,
 			},
 		},
 	}

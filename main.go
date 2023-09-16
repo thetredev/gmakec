@@ -16,6 +16,7 @@ import (
 )
 
 const CONFIGURE_DIR string = ".gmakec"
+const GLOBAL_DEFINITION_YAML string = "gmakec.yaml"
 
 type CompilerDefinition struct {
 	Name  string   `yaml:"name"`
@@ -222,7 +223,7 @@ func (globalDef *GlobalDefinition) RefTargetStringValue(refString string, target
 }
 
 func parseYaml() (*GlobalDefinition, error) {
-	yamlFile, err := os.ReadFile("gomakec.yaml")
+	yamlFile, err := os.ReadFile(GLOBAL_DEFINITION_YAML)
 
 	if err != nil {
 		return nil, err

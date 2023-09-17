@@ -1,0 +1,22 @@
+description: Compiler defines gmakec sample
+version: "1.0.0"
+
+compilers:
+  - name: gcc-default
+    path: gcc
+    flags:
+      - -Wall
+      - -Wextra
+      - -pedantic
+
+targets:
+  - compiler:
+      ref: gcc-default
+    defines:
+      - DEFINE_WITHOUT_VALUE
+      - DEFINE_WITH_INT_VALUE=64
+      - DEFINE_WITH_STRING_VALUE="hello"
+      - DEFINE_WITH_STRING_NUMBER_VALUE="420"
+    sources:
+      - path: main.c
+    output: build/defines

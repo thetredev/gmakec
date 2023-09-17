@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <mylib.h>
-
 int main() {
 #ifndef DEFINE_WITHOUT_VALUE
     fprintf(stderr, "DEFINE_WITHOUT_VALUE is not defined!\n");
@@ -31,7 +29,5 @@ int main() {
 #else
     assert(strcmp(DEFINE_WITH_STRING_NUMBER_VALUE, "420") == 0);
 #endif // DEFINE_WITH_STRING_NUMBER_VALUE
-
-    myfunc();
     return 0;
 }

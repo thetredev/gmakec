@@ -1,5 +1,5 @@
 #include <platforms_header.h>
-#include <stuff.h>
+#include <shared.h>
 
 int main() {
     my_shared_code();

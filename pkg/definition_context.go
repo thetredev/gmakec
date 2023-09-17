@@ -231,7 +231,7 @@ func (defContext *DefinitionContext) Configure(defContexts *[]*DefinitionContext
 	return err
 }
 
-func (defContext *DefinitionContext) Build() error {
+func (defContext *DefinitionContext) Build(verbose bool) error {
 	var wg sync.WaitGroup
 
 	err := filepath.Walk(defContext.ConfigureDir, func(name string, info os.FileInfo, err error) error {
@@ -269,6 +269,10 @@ func (defContext *DefinitionContext) Build() error {
 
 				if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 					log.Fatalf("ERROR: %s\n", err.Error())
+				}
+
+				if verbose {
+					shellCommand = slices.Insert(shellCommand, 2, "-v")
 				}
 
 				command := exec.Command(shellCommand[1], shellCommand[2:]...)

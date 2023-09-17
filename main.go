@@ -67,8 +67,10 @@ func build(context *cli.Context) error {
 		return err
 	}
 
+	verbose := context.Args().Get(0) == "verbose"
+
 	for _, dc := range definitionContexts {
-		err = dc.Build()
+		err = dc.Build(verbose)
 
 		if err != nil {
 			return err

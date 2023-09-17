@@ -1,62 +1,57 @@
 package gmakec
 
 import (
-	"bufio"
 	"log"
 	"os"
 	"os/exec"
-	"os/user"
 	"strings"
 )
 
 type TargetHook struct {
+	Shell   string `yaml:"shell"`
 	Step    string `yaml:"step"`
 	Command string `yaml:"command"`
 }
 
-func (this *TargetHook) Execute(workingDir string) {
-	shell, err := parseUserShell()
-
-	if err != nil {
-		log.Fatalf("ERROR: %s\n", err.Error())
-	}
-
-	command := exec.Command(shell, "-c", this.Command)
+func (this *TargetHook) execute(command *exec.Cmd, workingDir string) {
 	command.Dir = workingDir
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
-	if err = command.Run(); err != nil {
+	if err := command.Run(); err != nil {
 		log.Fatalf("ERROR: %s\n", err.Error())
 	}
 }
 
-func parseUserShell() (string, error) {
-	currentUser, err := user.Current()
+func (this *TargetHook) executeWithShell(shellString string, workingDir string) {
+	commandPrefix := strings.Split(shellString, " ")
+	var command *exec.Cmd
 
-	if err != nil {
-		return "", err
+	if len(commandPrefix) > 1 {
+		command = exec.Command(commandPrefix[0], commandPrefix[1])
+	} else {
+		command = exec.Command(commandPrefix[0])
 	}
 
-	passwd, err := os.Open("/etc/passwd")
+	command.Args = append(command.Args, this.Command)
+	this.execute(command, workingDir)
+}
 
-	if err != nil {
-		return "", err
+func (this *TargetHook) executeWithoutShell(workingDir string) {
+	args := strings.Split(this.Command, " ")
+	this.execute(exec.Command(args[0], args[1:]...), workingDir)
+}
+
+func (this *TargetHook) Execute(workingDir string) {
+	shellString := this.Shell
+
+	if shellString == "none" {
+		shellString = ""
 	}
 
-	defer passwd.Close()
-
-	fileScanner := bufio.NewScanner(passwd)
-	fileScanner.Split(bufio.ScanLines)
-
-	for fileScanner.Scan() {
-		text := fileScanner.Text()
-
-		if strings.HasPrefix(text, currentUser.Username) {
-			ent := strings.Split(text, ":")
-			return ent[len(ent)-1], nil
-		}
+	if len(shellString) > 0 {
+		this.executeWithShell(shellString, workingDir)
+	} else {
+		this.executeWithoutShell(workingDir)
 	}
-
-	panic("This line is never supposed to be reached on Linux! PANIC!!!")
 }

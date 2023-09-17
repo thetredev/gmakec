@@ -17,18 +17,26 @@ targets:
     output: build/independent
     hooks:
       - step: preConfigure
+        shell: /bin/bash -c
         command: echo "preConfigure independent first"
       - step: preConfigure
+        shell: /bin/bash -c
         command: echo "preConfigure independent second"
       - step: postConfigure
+        shell: /bin/bash -c
         command: echo "postConfigure independent first"
       - step: postConfigure
+        shell: /bin/bash -c
         command: echo "postConfigure independent second"
       - step: preBuild
+        shell: /bin/bash -c
         command: echo "preBuild independent first"
       - step: preBuild
+        shell: /bin/bash -c
         command: echo "preBuild independent second"
       - step: postBuild
+        shell: /bin/bash -c
         command: echo "postBuild independent first"
       - step: postBuild
+        shell: /bin/bash -c
         command: echo "postBuild independent second ${HOME}"

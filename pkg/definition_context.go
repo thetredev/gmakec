@@ -44,7 +44,7 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 		ConfigureDir:   fmt.Sprintf("%s/%s", definitionPath, CONFIGURE_DIR),
 	}
 
-	if err = defContext.Definition.sanitize(); err != nil {
+	if err = defContext.Definition.sanitize(defContext); err != nil {
 		return nil, err
 	}
 

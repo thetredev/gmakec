@@ -18,19 +18,27 @@ type GlobalDefinition struct {
 	VersionTweak string
 }
 
-func (this *GlobalDefinition) sanitizeTargets() error {
+func (this *GlobalDefinition) sanitizeTargets(definitionContext *DefinitionContext) error {
 	t := make([]TargetDefinition, 0)
 
-	for _, targetDef := range this.Targets {
+	for index, targetDef := range this.Targets {
 		if len(targetDef.Platform) > 0 && runtime.GOOS != targetDef.Platform {
 			continue
+		}
+
+		if len(targetDef.Output) == 0 {
+			return fmt.Errorf(
+				"Target of definition path `%s` and index %d has no output!",
+				definitionContext.DefinitionPath,
+				index,
+			)
 		}
 
 		t = append(t, targetDef)
 	}
 
 	if len(t) == 0 {
-		return fmt.Errorf("No targets left to build after sanitizing targets!")
+		return fmt.Errorf("No targets left to build after sanitizing targets!\n")
 	}
 
 	this.Targets = t
@@ -84,12 +92,12 @@ func (this *GlobalDefinition) sanitizeCompilers() error {
 	return nil
 }
 
-func (this *GlobalDefinition) sanitize() error {
+func (this *GlobalDefinition) sanitize(definitionContext *DefinitionContext) error {
 	if err := this.sanitizeVersion(); err != nil {
 		return err
 	}
 
-	if err := this.sanitizeTargets(); err != nil {
+	if err := this.sanitizeTargets(definitionContext); err != nil {
 		return err
 	}
 

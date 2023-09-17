@@ -2,7 +2,6 @@ package gmakec
 
 import (
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -14,11 +13,7 @@ type TargetHook struct {
 }
 
 func (this *TargetHook) execute(command *exec.Cmd, workingDir string) {
-	command.Dir = workingDir
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-
-	if err := command.Run(); err != nil {
+	if err := ExecuteCommand(command, workingDir); err != nil {
 		log.Fatalf("ERROR: %s\n", err.Error())
 	}
 }

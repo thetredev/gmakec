@@ -325,11 +325,8 @@ func (this *DefinitionContext) Build(verbose bool) error {
 				}
 
 				command := exec.Command(shellCommand[1], shellCommand[2:]...)
-				command.Dir = this.DefinitionPath
-				command.Stdout = os.Stdout
-				command.Stderr = os.Stderr
 
-				if err = command.Run(); err != nil {
+				if err := ExecuteCommand(command, this.DefinitionPath); err != nil {
 					log.Fatalf("ERROR: %s\n", err.Error())
 				}
 

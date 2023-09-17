@@ -12,17 +12,17 @@ type CompilerDefinition struct {
 	Flags []string `yaml:"flags"`
 }
 
-func (this *CompilerDefinition) FindRef(globalCompilerDefs *[]CompilerDefinition) *CompilerDefinition {
-	for _, globalCompilerDef := range *globalCompilerDefs {
-		if globalCompilerDef.Name == this.Ref {
-			return &globalCompilerDef
+func (this *CompilerDefinition) FindRef(refCompilerDefs *[]CompilerDefinition) *CompilerDefinition {
+	for _, refCompilerDef := range *refCompilerDefs {
+		if refCompilerDef.Name == this.Ref {
+			return &refCompilerDef
 		}
 	}
 
 	return nil
 }
 
-func (this *CompilerDefinition) WithRef(globalCompilerDefs *[]CompilerDefinition) (*CompilerDefinition, error) {
+func (this *CompilerDefinition) WithRef(refCompilerDefs *[]CompilerDefinition) (*CompilerDefinition, error) {
 	if len(this.Ref) == 0 {
 		if len(this.Path) == 0 {
 			return nil, fmt.Errorf("Non-ref compiler definition of name `%s` need to have the field `path` set!", this.Name)
@@ -38,7 +38,7 @@ func (this *CompilerDefinition) WithRef(globalCompilerDefs *[]CompilerDefinition
 		return this, nil
 	}
 
-	compilerRef := this.FindRef(globalCompilerDefs)
+	compilerRef := this.FindRef(refCompilerDefs)
 
 	if compilerRef == nil {
 		return nil, fmt.Errorf("Could not find compiler ref: %s\n", this.Ref)

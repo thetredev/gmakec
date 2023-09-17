@@ -85,8 +85,8 @@ func (this *DefinitionContext) isConfigured(expectedFileCount int) (bool, error)
 }
 
 func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContext) error {
-	graphs := this.Definition.GenerateDependencyGraphs()
-	targetGroupMatrix := GenerateTargetGroupMatrix(graphs)
+	graphs := this.Definition.generateDependencyGraphs()
+	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
 	alreadyConfigured, err := this.isConfigured(len(targetGroupMatrix))
 
@@ -111,7 +111,7 @@ func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContex
 			Targets: targetGroupIndices,
 		}
 
-		buildCommands, err := targetGroup.Configure(this, definitionContexts)
+		buildCommands, err := targetGroup.configure(this, definitionContexts)
 
 		if err != nil {
 			return err
@@ -170,7 +170,7 @@ func (this *DefinitionContext) Build(verbose bool) error {
 				}
 
 				targetDef := this.Definition.Targets[targetIndex]
-				targetDef.ExecuteHooks("preBuild", this.DefinitionPath)
+				targetDef.executeHooks("preBuild", this.DefinitionPath)
 
 				outputDir := filepath.Dir(fmt.Sprintf("%s/%s", this.DefinitionPath, targetDef.Output))
 
@@ -184,11 +184,11 @@ func (this *DefinitionContext) Build(verbose bool) error {
 
 				command := exec.Command(shellCommand[1], shellCommand[2:]...)
 
-				if err := ExecuteCommand(command, this.DefinitionPath); err != nil {
+				if err := executeCommand(command, this.DefinitionPath); err != nil {
 					log.Fatalf("ERROR: %s\n", err.Error())
 				}
 
-				targetDef.ExecuteHooks("postBuild", this.DefinitionPath)
+				targetDef.executeHooks("postBuild", this.DefinitionPath)
 			}
 		}(strings.Split(string(bytes), "\n"))
 		return nil

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func ExecuteCommand(command *exec.Cmd, workingDir string) error {
+func executeCommand(command *exec.Cmd, workingDir string) error {
 	command.Dir = workingDir
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr

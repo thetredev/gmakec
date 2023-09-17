@@ -13,7 +13,7 @@ type TargetGroup struct {
 	Targets []int
 }
 
-func (this *TargetGroup) Configure(
+func (this *TargetGroup) configure(
 	definitionContext *DefinitionContext, definitionContexts *[]*DefinitionContext,
 ) ([]string, error) {
 	buildCommands := []string{}
@@ -22,10 +22,10 @@ func (this *TargetGroup) Configure(
 		targetIndex := this.Targets[i]
 		targetDef := definitionContext.Definition.Targets[targetIndex]
 
-		targetDef.ExecuteHooks("preConfigure", definitionContext.DefinitionPath)
+		targetDef.executeHooks("preConfigure", definitionContext.DefinitionPath)
 
 		// merge compiler flags
-		compilerDef, err := targetDef.Compiler.WithRef(&definitionContext.Definition.Compilers)
+		compilerDef, err := targetDef.Compiler.withRef(&definitionContext.Definition.Compilers)
 
 		if err != nil {
 			return nil, err
@@ -42,7 +42,7 @@ func (this *TargetGroup) Configure(
 			includeStrings := []string{}
 
 			if strings.Contains(include, ":") {
-				refStringArrayValue, err := FindRefTargetStringArrayValue(include, &targetDef, definitionContexts)
+				refStringArrayValue, err := findRefTargetStringArrayValue(include, &targetDef, definitionContexts)
 
 				if err != nil {
 					return nil, err
@@ -82,7 +82,7 @@ func (this *TargetGroup) Configure(
 				linkPath := link.Path
 
 				if strings.Contains(linkPath, ":") {
-					linkPath, err = FindRefTargetStringValue(linkPath, &targetDef, definitionContexts)
+					linkPath, err = findRefTargetStringValue(linkPath, &targetDef, definitionContexts)
 				}
 
 				buildCommand = append(buildCommand, filepath.Dir(linkPath))
@@ -104,7 +104,7 @@ func (this *TargetGroup) Configure(
 
 				buildCommand = append(buildCommand, globbed...)
 			} else if strings.Contains(source, ":") {
-				refStringValue, err := FindRefTargetStringValue(source, &targetDef, definitionContexts)
+				refStringValue, err := findRefTargetStringValue(source, &targetDef, definitionContexts)
 
 				if err != nil {
 					return nil, err
@@ -117,7 +117,7 @@ func (this *TargetGroup) Configure(
 		}
 
 		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
-		targetDef.ExecuteHooks("postConfigure", definitionContext.DefinitionPath)
+		targetDef.executeHooks("postConfigure", definitionContext.DefinitionPath)
 	}
 
 	return buildCommands, nil

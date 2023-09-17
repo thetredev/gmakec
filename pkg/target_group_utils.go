@@ -21,7 +21,7 @@ import "golang.org/x/exp/slices"
 //
 // I'm always open for suggestions. :)
 // ~ thetredev
-func GenerateTargetGroupMatrix(graphs [][]int) [][]int {
+func generateTargetGroupMatrix(graphs [][]int) [][]int {
 	targetGroupMatrix := [][]int{}
 
 	for i := len(graphs) - 1; i >= 0; i-- {

@@ -8,11 +8,11 @@ type GlobalDefinition struct {
 	Imports     []string             `yaml:"imports"`
 }
 
-func (this *GlobalDefinition) GenerateDependencyGraphs() [][]int {
+func (this *GlobalDefinition) generateDependencyGraphs() [][]int {
 	graphs := [][]int{}
 
 	for index := range this.Targets {
-		graphs = append(graphs, this.Targets[index].DependencyGraph(index, &this.Targets))
+		graphs = append(graphs, this.Targets[index].dependencyGraph(index, &this.Targets))
 	}
 
 	return graphs

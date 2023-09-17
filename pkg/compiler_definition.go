@@ -28,7 +28,7 @@ func (this *CompilerDefinition) findRef(refCompilerDefinitions *[]CompilerDefini
 	return nil
 }
 
-func (this *CompilerDefinition) WithRef(refCompilerDefinitions *[]CompilerDefinition) (*CompilerDefinition, error) {
+func (this *CompilerDefinition) withRef(refCompilerDefinitions *[]CompilerDefinition) (*CompilerDefinition, error) {
 	if len(this.Ref) == 0 {
 		if len(this.Path) == 0 {
 			return nil, fmt.Errorf("Non-ref compiler definition of name `%s` need to have the field `path` set!", this.Name)

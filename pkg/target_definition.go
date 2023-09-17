@@ -18,10 +18,10 @@ type TargetDefinition struct {
 	Hooks        []TargetHook       `yaml:"hooks"`
 }
 
-func (this *TargetDefinition) ExecuteHooks(step string, workingDir string) {
+func (this *TargetDefinition) executeHooks(step string, workingDir string) {
 	for _, targetHook := range this.Hooks {
 		if targetHook.Step == step {
-			targetHook.Execute(workingDir)
+			targetHook.execute(workingDir)
 		}
 	}
 }
@@ -40,7 +40,7 @@ func (this *TargetDefinition) findField(fieldName string) *structs.Field {
 	return nil
 }
 
-func (this *TargetDefinition) FieldStringValue(fieldName string, definitionContext *DefinitionContext) (string, error) {
+func (this *TargetDefinition) fieldStringValue(fieldName string, definitionContext *DefinitionContext) (string, error) {
 	field := this.findField(fieldName)
 
 	if field == nil {
@@ -50,7 +50,7 @@ func (this *TargetDefinition) FieldStringValue(fieldName string, definitionConte
 	return fmt.Sprintf("%s/%s", definitionContext.DefinitionPath, field.Value().(string)), nil
 }
 
-func (this *TargetDefinition) FieldStringArrayValue(
+func (this *TargetDefinition) fieldStringArrayValue(
 	fieldName string, definitionContext *DefinitionContext,
 ) ([]string, error) {
 	field := this.findField(fieldName)
@@ -68,7 +68,7 @@ func (this *TargetDefinition) FieldStringArrayValue(
 	return result, nil
 }
 
-func (this *TargetDefinition) DependencyGraph(index int, targetDefinitions *[]TargetDefinition) []int {
+func (this *TargetDefinition) dependencyGraph(index int, targetDefinitions *[]TargetDefinition) []int {
 	dependencyGraph := []int{index}
 
 	if len(this.Dependencies) > 0 {

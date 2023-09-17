@@ -33,7 +33,7 @@ func findRefData(refString string, definitionContexts *[]*DefinitionContext) (st
 	return ref[1], refContext, refTarget, nil
 }
 
-func FindRefTargetStringValue(
+func findRefTargetStringValue(
 	refString string, targetDefinition *TargetDefinition, definitionContexts *[]*DefinitionContext,
 ) (string, error) {
 	fieldName, refContext, refTarget, err := findRefData(refString, definitionContexts)
@@ -42,7 +42,7 @@ func FindRefTargetStringValue(
 		return "", nil
 	}
 
-	fieldValue, err := refTarget.FieldStringValue(fieldName, refContext)
+	fieldValue, err := refTarget.fieldStringValue(fieldName, refContext)
 
 	if err != nil {
 		return "", err
@@ -51,7 +51,7 @@ func FindRefTargetStringValue(
 	return fieldValue, nil
 }
 
-func FindRefTargetStringArrayValue(
+func findRefTargetStringArrayValue(
 	refString string, targetDefinition *TargetDefinition, definitionContexts *[]*DefinitionContext,
 ) ([]string, error) {
 	fieldName, refContext, refTarget, err := findRefData(refString, definitionContexts)
@@ -60,7 +60,7 @@ func FindRefTargetStringArrayValue(
 		return nil, nil
 	}
 
-	fieldValue, err := refTarget.FieldStringArrayValue(fieldName, refContext)
+	fieldValue, err := refTarget.fieldStringArrayValue(fieldName, refContext)
 
 	if err != nil {
 		return nil, err

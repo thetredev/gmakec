@@ -12,8 +12,8 @@ type TargetHook struct {
 	Command string `yaml:"command"`
 }
 
-func (this *TargetHook) execute(command *exec.Cmd, workingDir string) {
-	if err := ExecuteCommand(command, workingDir); err != nil {
+func (this *TargetHook) doExecute(command *exec.Cmd, workingDir string) {
+	if err := executeCommand(command, workingDir); err != nil {
 		log.Fatalf("ERROR: %s\n", err.Error())
 	}
 }
@@ -29,7 +29,7 @@ func (this *TargetHook) executeWithShell(shellString string, workingDir string) 
 	}
 
 	command.Args = append(command.Args, this.Command)
-	this.execute(command, workingDir)
+	this.doExecute(command, workingDir)
 }
 
 func (this *TargetHook) executeWithoutShell(workingDir string) {
@@ -40,10 +40,10 @@ func (this *TargetHook) executeWithoutShell(workingDir string) {
 		command.Args = append(command.Args, args[1:]...)
 	}
 
-	this.execute(command, workingDir)
+	this.doExecute(command, workingDir)
 }
 
-func (this *TargetHook) Execute(workingDir string) {
+func (this *TargetHook) execute(workingDir string) {
 	shellString := this.Shell
 
 	if shellString == "none" {

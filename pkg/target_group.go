@@ -13,17 +13,19 @@ type TargetGroup struct {
 	Targets []int
 }
 
-func (this *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[]*DefinitionContext) ([]string, error) {
+func (this *TargetGroup) Configure(
+	definitionContext *DefinitionContext, definitionContexts *[]*DefinitionContext,
+) ([]string, error) {
 	buildCommands := []string{}
 
 	for i := len(this.Targets) - 1; i >= 0; i-- {
 		targetIndex := this.Targets[i]
-		targetDef := defContext.Definition.Targets[targetIndex]
+		targetDef := definitionContext.Definition.Targets[targetIndex]
 
-		targetDef.ExecuteHooks("preConfigure", defContext.DefinitionPath)
+		targetDef.ExecuteHooks("preConfigure", definitionContext.DefinitionPath)
 
 		// merge compiler flags
-		compilerDef, err := targetDef.Compiler.WithRef(&defContext.Definition.Compilers)
+		compilerDef, err := targetDef.Compiler.WithRef(&definitionContext.Definition.Compilers)
 
 		if err != nil {
 			return nil, err
@@ -40,7 +42,7 @@ func (this *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[
 			includeStrings := []string{}
 
 			if strings.Contains(include, ":") {
-				refStringArrayValue, err := FindRefTargetStringArrayValue(include, &targetDef, defContexts)
+				refStringArrayValue, err := FindRefTargetStringArrayValue(include, &targetDef, definitionContexts)
 
 				if err != nil {
 					return nil, err
@@ -79,7 +81,7 @@ func (this *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[
 				linkPath := link.Path
 
 				if strings.Contains(linkPath, ":") {
-					linkPath, err = FindRefTargetStringValue(linkPath, &targetDef, defContexts)
+					linkPath, err = FindRefTargetStringValue(linkPath, &targetDef, definitionContexts)
 				}
 
 				buildCommand = append(buildCommand, filepath.Dir(linkPath))
@@ -101,7 +103,7 @@ func (this *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[
 
 				buildCommand = append(buildCommand, globbed...)
 			} else if strings.Contains(source, ":") {
-				refStringValue, err := FindRefTargetStringValue(source, &targetDef, defContexts)
+				refStringValue, err := FindRefTargetStringValue(source, &targetDef, definitionContexts)
 
 				if err != nil {
 					return nil, err
@@ -114,7 +116,7 @@ func (this *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[
 		}
 
 		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
-		targetDef.ExecuteHooks("postConfigure", defContext.DefinitionPath)
+		targetDef.ExecuteHooks("postConfigure", definitionContext.DefinitionPath)
 	}
 
 	return buildCommands, nil

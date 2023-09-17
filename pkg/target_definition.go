@@ -9,6 +9,7 @@ import (
 
 type TargetDefinition struct {
 	Name           string             `yaml:"name"`
+	Platform       string             `yaml:"platform"`
 	Compiler       CompilerDefinition `yaml:"compiler"`
 	ConfigureFiles []ConfigureFile    `yaml:"configure_files"`
 	Defines        []string           `yaml:"defines"`

@@ -2,6 +2,7 @@ package gmakec
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 )
 
@@ -15,6 +16,25 @@ type GlobalDefinition struct {
 	VersionMinor string
 	VersionPatch string
 	VersionTweak string
+}
+
+func (this *GlobalDefinition) sanitizeTargets() error {
+	t := make([]TargetDefinition, 0)
+
+	for _, targetDef := range this.Targets {
+		if len(targetDef.Platform) > 0 && runtime.GOOS != targetDef.Platform {
+			continue
+		}
+
+		t = append(t, targetDef)
+	}
+
+	if len(t) == 0 {
+		return fmt.Errorf("No targets left to build after sanitizing targets!")
+	}
+
+	this.Targets = t
+	return nil
 }
 
 func (this *GlobalDefinition) sanitizeVersion() error {
@@ -40,6 +60,18 @@ func (this *GlobalDefinition) sanitizeVersion() error {
 				this.VersionTweak = semver[3]
 			}
 		}
+	}
+
+	return nil
+}
+
+func (this *GlobalDefinition) sanitize() error {
+	if err := this.sanitizeVersion(); err != nil {
+		return err
+	}
+
+	if err := this.sanitizeTargets(); err != nil {
+		return err
 	}
 
 	return nil

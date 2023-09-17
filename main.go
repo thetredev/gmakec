@@ -97,12 +97,12 @@ func clean(context *cli.Context) error {
 			outputDir := fmt.Sprintf("%s/%s", dc.DefinitionPath, filepath.Dir(targetDef.Output))
 
 			if err = os.RemoveAll(outputDir); err != nil {
-				fmt.Printf("WARNING: could not remove directory %s: %s", outputDir, err.Error())
+				fmt.Printf("WARNING: could not remove directory %s: %s\n", outputDir, err.Error())
 			}
 		}
 
 		if err = os.RemoveAll(dc.ConfigureDir); err != nil {
-			fmt.Printf("WARNING: could not remove directory %s: %s", dc.ConfigureDir, err.Error())
+			fmt.Printf("WARNING: could not remove directory %s: %s\n", dc.ConfigureDir, err.Error())
 		}
 	}
 

@@ -52,7 +52,7 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 }
 
 func (this *DefinitionContext) sanitize() error {
-	if err := this.Definition.sanitizeVersion(); err != nil {
+	if err := this.Definition.sanitize(); err != nil {
 		log.Printf(err.Error())
 	}
 

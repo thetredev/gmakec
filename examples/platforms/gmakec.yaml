@@ -1,6 +1,7 @@
 version: "1.0.0"
 
 targets:
+  # target source file platform independency
   - compiler:
       path: gcc
     includes:
@@ -15,3 +16,38 @@ targets:
       - path: src/darwin/darwin.c
         platform: darwin
     output: build/platforms
+
+  # target platform independency
+  - platform: linux
+    compiler:
+      path: gcc
+    includes:
+      - include
+    sources:
+      - path: src/main.c
+      - path: src/shared/*.c
+      - path: src/linux/linux.c
+    output: build/target-platform
+
+  - platform: darwin
+    compiler:
+      path: gcc
+    includes:
+      - include
+    sources:
+      - path: src/main.c
+      - path: src/shared/*.c
+      - path: src/darwin/darwin.c
+    output: build/target-platform
+
+  - platform: windows
+    compiler:
+      # should be cl.exe or mingw I guess; should be fine as a demo though...
+      path: gcc
+    includes:
+      - include
+    sources:
+      - path: src/main.c
+      - path: src/shared/*.c
+      - path: src/windows/windows.c
+    output: build/target-platform

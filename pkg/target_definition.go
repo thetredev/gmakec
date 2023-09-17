@@ -26,7 +26,7 @@ func (this *TargetDefinition) ExecuteHooks(step string, workingDir string) {
 	}
 }
 
-func (this *TargetDefinition) FindField(fieldName string) *structs.Field {
+func (this *TargetDefinition) findField(fieldName string) *structs.Field {
 	fields := structs.Fields(this)
 
 	for _, field := range fields {
@@ -41,7 +41,7 @@ func (this *TargetDefinition) FindField(fieldName string) *structs.Field {
 }
 
 func (this *TargetDefinition) FieldStringValue(fieldName string, defContext *DefinitionContext) (string, error) {
-	field := this.FindField(fieldName)
+	field := this.findField(fieldName)
 
 	if field == nil {
 		return "", fmt.Errorf("Could not find field `%s`", fieldName)
@@ -51,7 +51,7 @@ func (this *TargetDefinition) FieldStringValue(fieldName string, defContext *Def
 }
 
 func (this *TargetDefinition) FieldStringArrayValue(fieldName string, defContext *DefinitionContext) ([]string, error) {
-	field := this.FindField(fieldName)
+	field := this.findField(fieldName)
 
 	if field == nil {
 		return nil, fmt.Errorf("Could not find field `%s`", fieldName)

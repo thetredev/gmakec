@@ -44,14 +44,14 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 		ConfigureDir:   fmt.Sprintf("%s/%s", definitionPath, CONFIGURE_DIR),
 	}
 
-	if err = defContext.Sanitize(); err != nil {
+	if err = defContext.sanitize(); err != nil {
 		return nil, err
 	}
 
 	return defContext, nil
 }
 
-func (this *DefinitionContext) Sanitize() error {
+func (this *DefinitionContext) sanitize() error {
 	for index, compilerDef := range this.Definition.Compilers {
 		if len(compilerDef.Path) == 0 {
 			return fmt.Errorf("Global compiler definition of name `%s` (index %d) need to have the field `path` set!", compilerDef.Name, index)

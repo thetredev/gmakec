@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/urfave/cli/v2"
 
@@ -89,7 +90,7 @@ func clean(context *cli.Context) error {
 
 	for _, dc := range definitionContexts {
 		for _, targetDef := range dc.Definition.Targets {
-			outputDir := fmt.Sprintf("%s/%s", dc.DefinitionPath, targetDef.Output)
+			outputDir := fmt.Sprintf("%s/%s", dc.DefinitionPath, filepath.Dir(targetDef.Output))
 
 			if err = os.RemoveAll(outputDir); err != nil {
 				fmt.Printf("WARNING: could not remove directory %s: %s", outputDir, err.Error())

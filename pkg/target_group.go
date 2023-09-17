@@ -32,6 +32,12 @@ func (this *TargetGroup) configure(
 			return nil, err
 		}
 
+		for _, configureFile := range targetDef.ConfigureFiles {
+			if err := configureFile.Execute(definitionContext); err != nil {
+				return nil, err
+			}
+		}
+
 		buildCommand := []string{
 			fmt.Sprintf("%d", targetIndex),
 			compilerDef.Object.Path,
@@ -127,13 +133,6 @@ func (this *TargetGroup) configure(
 		}
 
 		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
-
-		for _, configureFile := range targetDef.ConfigureFiles {
-			if err := configureFile.Execute(definitionContext); err != nil {
-				return nil, err
-			}
-		}
-
 		targetDef.executeHooks("postConfigure", definitionContext.DefinitionPath)
 	}
 

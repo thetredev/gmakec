@@ -11,6 +11,5 @@ targets:
     sources:
       - src/*.c
     includes:
-      - include
-      - include/myinc
+      - include/**
     output: build/simple-example

@@ -2,8 +2,11 @@ package gmakec
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/yargevad/filepathx"
 )
 
 type TargetGroup struct {
@@ -34,6 +37,8 @@ func (targetGroup *TargetGroup) Configure(defContext *DefinitionContext, defCont
 		buildCommand = append(buildCommand, compilerDef.Flags...)
 
 		for _, include := range targetDef.Includes {
+			includeStrings := []string{}
+
 			if strings.Contains(include, ":") {
 				refStringArrayValue, err := FindRefTargetStringArrayValue(include, &targetDef, defContexts)
 
@@ -41,13 +46,30 @@ func (targetGroup *TargetGroup) Configure(defContext *DefinitionContext, defCont
 					return nil, err
 				}
 
-				for _, value := range refStringArrayValue {
-					buildCommand = append(buildCommand, "-I")
-					buildCommand = append(buildCommand, value)
-				}
+				includeStrings = append(includeStrings, refStringArrayValue...)
 			} else {
-				buildCommand = append(buildCommand, "-I")
-				buildCommand = append(buildCommand, include)
+				includeStrings = append(includeStrings, include)
+			}
+
+			for _, includeString := range includeStrings {
+				if strings.Contains(includeString, "*") {
+					globbed, err := filepathx.Glob(includeString)
+
+					if err != nil {
+						return nil, err
+					}
+
+					for _, match := range globbed {
+						f, _ := os.Stat(match)
+
+						if f.IsDir() {
+							buildCommand = append(buildCommand, "-I")
+							buildCommand = append(buildCommand, match)
+						}
+					}
+				} else {
+					buildCommand = append(buildCommand, includeString)
+				}
 			}
 		}
 
@@ -71,7 +93,7 @@ func (targetGroup *TargetGroup) Configure(defContext *DefinitionContext, defCont
 
 		for _, source := range targetDef.Sources {
 			if strings.Contains(source, "*") {
-				globbed, err := filepath.Glob(source)
+				globbed, err := filepathx.Glob(source)
 
 				if err != nil {
 					return nil, err

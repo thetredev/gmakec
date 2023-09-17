@@ -160,7 +160,7 @@ func FindRefTarget(targetName string, refDefinitionContexts *[]*DefinitionContex
 	return nil, nil
 }
 
-func FindRefData(refString string, definitionContexts *[]*DefinitionContext) (string, *DefinitionContext, *TargetDefinition, error) {
+func findRefData(refString string, definitionContexts *[]*DefinitionContext) (string, *DefinitionContext, *TargetDefinition, error) {
 	ref := strings.Split(refString, ":")
 
 	if len(ref) < 2 {
@@ -179,7 +179,7 @@ func FindRefData(refString string, definitionContexts *[]*DefinitionContext) (st
 func FindRefTargetStringValue(
 	refString string, targetDefinition *TargetDefinition, definitionContexts *[]*DefinitionContext,
 ) (string, error) {
-	fieldName, refContext, refTarget, err := FindRefData(refString, definitionContexts)
+	fieldName, refContext, refTarget, err := findRefData(refString, definitionContexts)
 
 	if err != nil {
 		return "", nil
@@ -197,7 +197,7 @@ func FindRefTargetStringValue(
 func FindRefTargetStringArrayValue(
 	refString string, targetDefinition *TargetDefinition, definitionContexts *[]*DefinitionContext,
 ) ([]string, error) {
-	fieldName, refContext, refTarget, err := FindRefData(refString, definitionContexts)
+	fieldName, refContext, refTarget, err := findRefData(refString, definitionContexts)
 
 	if err != nil {
 		return nil, nil

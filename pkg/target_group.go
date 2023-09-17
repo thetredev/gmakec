@@ -122,6 +122,13 @@ func (this *TargetGroup) configure(
 		}
 
 		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
+
+		for _, configureFile := range targetDef.ConfigureFiles {
+			if err := configureFile.Execute(definitionContext); err != nil {
+				return nil, err
+			}
+		}
+
 		targetDef.executeHooks("postConfigure", definitionContext.DefinitionPath)
 	}
 

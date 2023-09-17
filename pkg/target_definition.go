@@ -8,15 +8,16 @@ import (
 )
 
 type TargetDefinition struct {
-	Name         string             `yaml:"name"`
-	Compiler     CompilerDefinition `yaml:"compiler"`
-	Defines      []string           `yaml:"defines"`
-	Sources      []string           `yaml:"sources"`
-	Includes     []string           `yaml:"includes"`
-	Links        []LinkDefinition   `yaml:"links"`
-	Output       string             `yaml:"output"`
-	Dependencies []string           `yaml:"dependencies"`
-	Hooks        []TargetHook       `yaml:"hooks"`
+	Name           string             `yaml:"name"`
+	Compiler       CompilerDefinition `yaml:"compiler"`
+	ConfigureFiles []ConfigureFile    `yaml:"configure_files"`
+	Defines        []string           `yaml:"defines"`
+	Sources        []string           `yaml:"sources"`
+	Includes       []string           `yaml:"includes"`
+	Links          []LinkDefinition   `yaml:"links"`
+	Output         string             `yaml:"output"`
+	Dependencies   []string           `yaml:"dependencies"`
+	Hooks          []TargetHook       `yaml:"hooks"`
 }
 
 func (this *TargetDefinition) executeHooks(step string, workingDir string) {

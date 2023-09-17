@@ -52,6 +52,10 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 }
 
 func (this *DefinitionContext) sanitize() error {
+	if err := this.Definition.sanitizeVersion(); err != nil {
+		log.Printf(err.Error())
+	}
+
 	for index, compilerDef := range this.Definition.Compilers {
 		if len(compilerDef.Path) == 0 {
 			return fmt.Errorf(

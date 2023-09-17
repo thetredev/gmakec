@@ -1,0 +1,25 @@
+description: Parallel builds gmakec sample
+version: "1.0.0"
+
+compilers:
+  - name: gcc-default
+    path: gcc
+    flags:
+      - -Wall
+      - -Wextra
+      - -pedantic
+
+# since there are no dependencies between the two targets,
+# they will each be built in parallel
+targets:
+  - compiler:
+      ref: gcc-default
+    sources:
+      - path: src/main1.c
+    output: build/main1
+
+  - compiler:
+      ref: gcc-default
+    sources:
+      - path: src/main2.c
+    output: build/main2

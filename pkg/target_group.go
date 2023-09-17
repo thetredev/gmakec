@@ -70,6 +70,7 @@ func (this *TargetGroup) Configure(
 						}
 					}
 				} else {
+					buildCommand = append(buildCommand, "-I")
 					buildCommand = append(buildCommand, includeString)
 				}
 			}

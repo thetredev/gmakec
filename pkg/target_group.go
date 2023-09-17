@@ -33,7 +33,7 @@ func (this *TargetGroup) Configure(
 
 		buildCommand := []string{
 			fmt.Sprintf("%d", targetIndex),
-			compilerDef.Path,
+			compilerDef.Object.Path,
 		}
 
 		buildCommand = append(buildCommand, compilerDef.Flags...)
@@ -65,12 +65,12 @@ func (this *TargetGroup) Configure(
 						f, _ := os.Stat(match)
 
 						if f.IsDir() {
-							buildCommand = append(buildCommand, "-I")
+							buildCommand = append(buildCommand, compilerDef.Object.IncludeSearchFlag)
 							buildCommand = append(buildCommand, match)
 						}
 					}
 				} else {
-					buildCommand = append(buildCommand, "-I")
+					buildCommand = append(buildCommand, compilerDef.Object.IncludeSearchFlag)
 					buildCommand = append(buildCommand, includeString)
 				}
 			}
@@ -78,7 +78,7 @@ func (this *TargetGroup) Configure(
 
 		for _, link := range targetDef.Links {
 			if len(link.Path) > 0 {
-				buildCommand = append(buildCommand, "-L")
+				buildCommand = append(buildCommand, compilerDef.Object.LinkSearchFlag)
 				linkPath := link.Path
 
 				if strings.Contains(linkPath, ":") {
@@ -91,7 +91,7 @@ func (this *TargetGroup) Configure(
 			buildCommand = append(buildCommand, link.Link)
 		}
 
-		buildCommand = append(buildCommand, "-o")
+		buildCommand = append(buildCommand, compilerDef.Object.OutputFlag)
 		buildCommand = append(buildCommand, targetDef.Output)
 
 		for _, source := range targetDef.Sources {

@@ -59,7 +59,6 @@ func configure(context *cli.Context) error {
 	return nil
 }
 
-// only GCC for now
 func build(context *cli.Context) error {
 	err := configure(context)
 
@@ -168,6 +167,8 @@ func main() {
 			},
 		},
 	}
+
+	gmakec.InitCompilers()
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)

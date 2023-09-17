@@ -6,16 +6,22 @@ import (
 )
 
 type CompilerDefinition struct {
-	Name  string   `yaml:"name"`
-	Ref   string   `yaml:"ref"`
-	Path  string   `yaml:"path"`
-	Flags []string `yaml:"flags"`
+	Name   string   `yaml:"name"`
+	Ref    string   `yaml:"ref"`
+	Path   string   `yaml:"path"`
+	Flags  []string `yaml:"flags"`
+	Object *Compiler
 }
 
 func (this *CompilerDefinition) findRef(refCompilerDefinitions *[]CompilerDefinition) *CompilerDefinition {
 	for _, refCompilerDefinition := range *refCompilerDefinitions {
 		if refCompilerDefinition.Name == this.Ref {
-			return &refCompilerDefinition
+			return &CompilerDefinition{
+				Name:  refCompilerDefinition.Name,
+				Path:  refCompilerDefinition.Path,
+				Ref:   refCompilerDefinition.Ref,
+				Flags: refCompilerDefinition.Flags,
+			}
 		}
 	}
 
@@ -34,7 +40,14 @@ func (this *CompilerDefinition) WithRef(refCompilerDefinitions *[]CompilerDefini
 			return nil, fmt.Errorf("Non-ref compiler path `%s` not found!", this.Path)
 		}
 
-		this.Path = path
+		object, err := findCompilerByPath(path)
+
+		if err != nil {
+			return nil, err
+		}
+
+		this.Path = object.Path
+		this.Object = object
 		return this, nil
 	}
 
@@ -44,9 +57,13 @@ func (this *CompilerDefinition) WithRef(refCompilerDefinitions *[]CompilerDefini
 		return nil, fmt.Errorf("Could not find compiler ref: %s\n", this.Ref)
 	}
 
-	return &CompilerDefinition{
-		Name:  compilerRef.Name,
-		Path:  compilerRef.Path,
-		Flags: append(compilerRef.Flags, this.Flags...),
-	}, nil
+	object, err := findCompilerByPath(compilerRef.Path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	compilerRef.Object = object
+	compilerRef.Flags = append(compilerRef.Flags, this.Flags...)
+	return compilerRef, nil
 }

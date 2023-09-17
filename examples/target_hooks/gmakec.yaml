@@ -1,4 +1,4 @@
-description: mylib gmakec sample
+description: Target hooks gmakec sample
 version: "1.0.0"
 
 compilers:
@@ -13,8 +13,8 @@ targets:
   - compiler:
       ref: gcc-default
     sources:
-      - main.c
-    output: build/independent
+      - path: main.c
+    output: build/hooks
     hooks:
       - step: preConfigure
         shell: /bin/bash -c

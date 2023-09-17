@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main() {
-    printf("independent\n");
+    printf("target hooks\n");
     return 0;
 }

@@ -39,7 +39,13 @@ func (this *TargetHook) executeWithShell(shellString string, workingDir string) 
 
 func (this *TargetHook) executeWithoutShell(workingDir string) {
 	args := strings.Split(this.Command, " ")
-	this.execute(exec.Command(args[0], args[1:]...), workingDir)
+	command := exec.Command(args[0])
+
+	if len(args) > 1 {
+		command.Args = append(command.Args, args[1:]...)
+	}
+
+	this.execute(command, workingDir)
 }
 
 func (this *TargetHook) Execute(workingDir string) {

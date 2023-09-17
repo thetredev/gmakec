@@ -16,8 +16,6 @@ const GLOBAL_DEFINITION_YAML string = "gmakec.yaml"
 var definitionContexts []*gmakec.DefinitionContext
 
 func collectDefinitionContexts(defContext *gmakec.DefinitionContext) error {
-	definitionContexts = make([]*gmakec.DefinitionContext, 0)
-
 	for _, defImport := range defContext.Definition.Imports {
 		importedDefContext, err := gmakec.NewDefinitionContext(fmt.Sprintf("%s/%s", defImport, GLOBAL_DEFINITION_YAML))
 
@@ -25,7 +23,11 @@ func collectDefinitionContexts(defContext *gmakec.DefinitionContext) error {
 			return err
 		}
 
-		definitionContexts = append(definitionContexts, importedDefContext)
+		err = collectDefinitionContexts(importedDefContext)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	definitionContexts = append(definitionContexts, defContext)
@@ -33,6 +35,7 @@ func collectDefinitionContexts(defContext *gmakec.DefinitionContext) error {
 }
 
 func configure(context *cli.Context) error {
+	definitionContexts = make([]*gmakec.DefinitionContext, 0)
 	defContext, err := gmakec.NewDefinitionContext(GLOBAL_DEFINITION_YAML)
 
 	if err != nil {

@@ -1,6 +1,9 @@
 description: mylib gmakec sample
 version: "1.0.0"
 
+imports:
+  - ../independent
+
 compilers:
   - name: gcc-default
     path: gcc

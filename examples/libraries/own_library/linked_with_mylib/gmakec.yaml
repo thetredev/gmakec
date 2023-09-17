@@ -16,29 +16,6 @@ targets:
   - compiler:
       ref: gcc-default
     sources:
-      - ../independent/main.c
-    output: build/independent
-    hooks:
-      - step: preConfigure
-        command: echo "preConfigure independent first"
-      - step: preConfigure
-        command: echo "preConfigure independent second"
-      - step: postConfigure
-        command: echo "postConfigure independent first"
-      - step: postConfigure
-        command: echo "postConfigure independent second"
-      - step: preBuild
-        command: echo "preBuild independent first"
-      - step: preBuild
-        command: echo "preBuild independent second"
-      - step: postBuild
-        command: echo "postBuild independent first"
-      - step: postBuild
-        command: echo "postBuild independent second ${HOME}"
-
-  - compiler:
-      ref: gcc-default
-    sources:
       - src/main.c
     includes:
       - libobject:includes

@@ -12,7 +12,7 @@ type CompilerDefinition struct {
 	Flags []string `yaml:"flags"`
 }
 
-func (this *CompilerDefinition) FindRef(refCompilerDefs *[]CompilerDefinition) *CompilerDefinition {
+func (this *CompilerDefinition) findRef(refCompilerDefs *[]CompilerDefinition) *CompilerDefinition {
 	for _, refCompilerDef := range *refCompilerDefs {
 		if refCompilerDef.Name == this.Ref {
 			return &refCompilerDef
@@ -38,7 +38,7 @@ func (this *CompilerDefinition) WithRef(refCompilerDefs *[]CompilerDefinition) (
 		return this, nil
 	}
 
-	compilerRef := this.FindRef(refCompilerDefs)
+	compilerRef := this.findRef(refCompilerDefs)
 
 	if compilerRef == nil {
 		return nil, fmt.Errorf("Could not find compiler ref: %s\n", this.Ref)

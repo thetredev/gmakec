@@ -140,6 +140,11 @@ func FindRefTargetStringValue(
 ) (string, error) {
 	ref := strings.Split(refString, ":")
 	refContext, refTarget := FindRefTarget(ref[0], defContexts)
+
+	if refContext == nil || refTarget == nil {
+		return "", fmt.Errorf("Could not find referenced target of name `%s`!", ref[0])
+	}
+
 	refFieldValue, err := refTarget.FieldStringValue(ref[1], refContext)
 
 	if err != nil {
@@ -154,6 +159,11 @@ func FindRefTargetStringArrayValue(
 ) ([]string, error) {
 	ref := strings.Split(refString, ":")
 	refContext, refTarget := FindRefTarget(ref[0], defContexts)
+
+	if refContext == nil || refTarget == nil {
+		return nil, fmt.Errorf("Could not find referenced target of name `%s`!", ref[0])
+	}
+
 	refFieldValue, err := refTarget.FieldStringArrayValue(ref[1], refContext)
 
 	if err != nil {

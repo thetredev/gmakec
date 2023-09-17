@@ -12,9 +12,9 @@ type CompilerDefinition struct {
 	Flags []string `yaml:"flags"`
 }
 
-func (compilerDef *CompilerDefinition) FindRef(globalCompilerDefs *[]CompilerDefinition) *CompilerDefinition {
+func (this *CompilerDefinition) FindRef(globalCompilerDefs *[]CompilerDefinition) *CompilerDefinition {
 	for _, globalCompilerDef := range *globalCompilerDefs {
-		if globalCompilerDef.Name == compilerDef.Ref {
+		if globalCompilerDef.Name == this.Ref {
 			return &globalCompilerDef
 		}
 	}
@@ -22,31 +22,31 @@ func (compilerDef *CompilerDefinition) FindRef(globalCompilerDefs *[]CompilerDef
 	return nil
 }
 
-func (compilerDef *CompilerDefinition) WithRef(globalCompilerDefs *[]CompilerDefinition) (*CompilerDefinition, error) {
-	if len(compilerDef.Ref) == 0 {
-		if len(compilerDef.Path) == 0 {
-			return nil, fmt.Errorf("Non-ref compiler definition of name `%s` need to have the field `path` set!", compilerDef.Name)
+func (this *CompilerDefinition) WithRef(globalCompilerDefs *[]CompilerDefinition) (*CompilerDefinition, error) {
+	if len(this.Ref) == 0 {
+		if len(this.Path) == 0 {
+			return nil, fmt.Errorf("Non-ref compiler definition of name `%s` need to have the field `path` set!", this.Name)
 		}
 
-		path, err := exec.LookPath(compilerDef.Path)
+		path, err := exec.LookPath(this.Path)
 
 		if err != nil {
-			return nil, fmt.Errorf("Non-ref compiler path `%s` not found!", compilerDef.Path)
+			return nil, fmt.Errorf("Non-ref compiler path `%s` not found!", this.Path)
 		}
 
-		compilerDef.Path = path
-		return compilerDef, nil
+		this.Path = path
+		return this, nil
 	}
 
-	compilerRef := compilerDef.FindRef(globalCompilerDefs)
+	compilerRef := this.FindRef(globalCompilerDefs)
 
 	if compilerRef == nil {
-		return nil, fmt.Errorf("Could not find compiler ref: %s\n", compilerDef.Ref)
+		return nil, fmt.Errorf("Could not find compiler ref: %s\n", this.Ref)
 	}
 
 	return &CompilerDefinition{
 		Name:  compilerRef.Name,
 		Path:  compilerRef.Path,
-		Flags: append(compilerRef.Flags, compilerDef.Flags...),
+		Flags: append(compilerRef.Flags, this.Flags...),
 	}, nil
 }

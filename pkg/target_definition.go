@@ -18,16 +18,16 @@ type TargetDefinition struct {
 	Hooks        []TargetHook       `yaml:"hooks"`
 }
 
-func (targetDef *TargetDefinition) ExecuteHooks(step string, workingDir string) {
-	for _, targetHook := range targetDef.Hooks {
+func (this *TargetDefinition) ExecuteHooks(step string, workingDir string) {
+	for _, targetHook := range this.Hooks {
 		if targetHook.Step == step {
 			targetHook.Execute(workingDir)
 		}
 	}
 }
 
-func (targetDef *TargetDefinition) FindField(fieldName string) *structs.Field {
-	fields := structs.Fields(targetDef)
+func (this *TargetDefinition) FindField(fieldName string) *structs.Field {
+	fields := structs.Fields(this)
 
 	for _, field := range fields {
 		tag := field.Tag("yaml")
@@ -40,8 +40,8 @@ func (targetDef *TargetDefinition) FindField(fieldName string) *structs.Field {
 	return nil
 }
 
-func (targetDef *TargetDefinition) FieldStringValue(fieldName string, defContext *DefinitionContext) (string, error) {
-	field := targetDef.FindField(fieldName)
+func (this *TargetDefinition) FieldStringValue(fieldName string, defContext *DefinitionContext) (string, error) {
+	field := this.FindField(fieldName)
 
 	if field == nil {
 		return "", fmt.Errorf("Could not find field `%s`", fieldName)
@@ -50,8 +50,8 @@ func (targetDef *TargetDefinition) FieldStringValue(fieldName string, defContext
 	return fmt.Sprintf("%s/%s", defContext.DefinitionPath, field.Value().(string)), nil
 }
 
-func (targetDef *TargetDefinition) FieldStringArrayValue(fieldName string, defContext *DefinitionContext) ([]string, error) {
-	field := targetDef.FindField(fieldName)
+func (this *TargetDefinition) FieldStringArrayValue(fieldName string, defContext *DefinitionContext) ([]string, error) {
+	field := this.FindField(fieldName)
 
 	if field == nil {
 		return nil, fmt.Errorf("Could not find field `%s`", fieldName)
@@ -66,12 +66,12 @@ func (targetDef *TargetDefinition) FieldStringArrayValue(fieldName string, defCo
 	return result, nil
 }
 
-func (targetDef *TargetDefinition) DependencyGraph(index int, targetDefs *[]TargetDefinition) []int {
+func (this *TargetDefinition) DependencyGraph(index int, targetDefs *[]TargetDefinition) []int {
 	dependencyGraph := []int{index}
 
-	if len(targetDef.Dependencies) > 0 {
+	if len(this.Dependencies) > 0 {
 		for i, otherTarget := range *targetDefs {
-			if slices.Contains(targetDef.Dependencies, otherTarget.Name) {
+			if slices.Contains(this.Dependencies, otherTarget.Name) {
 				dependencyGraph = append(dependencyGraph, i)
 			}
 		}

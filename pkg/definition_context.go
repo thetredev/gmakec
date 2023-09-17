@@ -51,8 +51,8 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 	return defContext, nil
 }
 
-func (defContext *DefinitionContext) Sanitize() error {
-	for index, compilerDef := range defContext.Definition.Compilers {
+func (this *DefinitionContext) Sanitize() error {
+	for index, compilerDef := range this.Definition.Compilers {
 		if len(compilerDef.Path) == 0 {
 			return fmt.Errorf("Global compiler definition of name `%s` (index %d) need to have the field `path` set!", compilerDef.Name, index)
 		}
@@ -206,8 +206,8 @@ func FindRefTargetStringArrayValue(
 	return fieldValue, nil
 }
 
-func (defContext *DefinitionContext) IsConfigured(expectedFileCount int) (bool, error) {
-	entries, err := os.ReadDir(defContext.ConfigureDir)
+func (this *DefinitionContext) IsConfigured(expectedFileCount int) (bool, error) {
+	entries, err := os.ReadDir(this.ConfigureDir)
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -220,11 +220,11 @@ func (defContext *DefinitionContext) IsConfigured(expectedFileCount int) (bool, 
 	return len(entries) == expectedFileCount, nil
 }
 
-func (defContext *DefinitionContext) Configure(defContexts *[]*DefinitionContext) error {
-	graphs := defContext.Definition.GenerateDependencyGraphs()
+func (this *DefinitionContext) Configure(defContexts *[]*DefinitionContext) error {
+	graphs := this.Definition.GenerateDependencyGraphs()
 	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
-	alreadyConfigured, err := defContext.IsConfigured(len(targetGroupMatrix))
+	alreadyConfigured, err := this.IsConfigured(len(targetGroupMatrix))
 
 	if err != nil {
 		return err
@@ -234,11 +234,11 @@ func (defContext *DefinitionContext) Configure(defContexts *[]*DefinitionContext
 		return nil
 	}
 
-	if err = os.RemoveAll(defContext.ConfigureDir); err != nil {
-		fmt.Printf("WARNING: could not remove directory %s: %s", defContext.ConfigureDir, err.Error())
+	if err = os.RemoveAll(this.ConfigureDir); err != nil {
+		fmt.Printf("WARNING: could not remove directory %s: %s", this.ConfigureDir, err.Error())
 	}
 
-	if err = os.MkdirAll(defContext.ConfigureDir, os.ModePerm); err != nil {
+	if err = os.MkdirAll(this.ConfigureDir, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -247,13 +247,13 @@ func (defContext *DefinitionContext) Configure(defContexts *[]*DefinitionContext
 			Targets: targetGroupIndices,
 		}
 
-		buildCommands, err := targetGroup.Configure(defContext, defContexts)
+		buildCommands, err := targetGroup.Configure(this, defContexts)
 
 		if err != nil {
 			return err
 		}
 
-		filePath := fmt.Sprintf("%s/%d", defContext.ConfigureDir, index)
+		filePath := fmt.Sprintf("%s/%d", this.ConfigureDir, index)
 		file, err := os.Create(filePath)
 
 		if err != nil {
@@ -274,11 +274,11 @@ func (defContext *DefinitionContext) Configure(defContexts *[]*DefinitionContext
 	return err
 }
 
-func (defContext *DefinitionContext) Build(verbose bool) error {
+func (this *DefinitionContext) Build(verbose bool) error {
 	var wg sync.WaitGroup
 
-	err := filepath.Walk(defContext.ConfigureDir, func(name string, info os.FileInfo, err error) error {
-		if name == defContext.ConfigureDir && info != nil && info.IsDir() {
+	err := filepath.Walk(this.ConfigureDir, func(name string, info os.FileInfo, err error) error {
+		if name == this.ConfigureDir && info != nil && info.IsDir() {
 			return nil
 		}
 
@@ -305,10 +305,10 @@ func (defContext *DefinitionContext) Build(verbose bool) error {
 					log.Fatalf("ERROR: %s\n", err.Error())
 				}
 
-				targetDef := defContext.Definition.Targets[targetIndex]
-				targetDef.ExecuteHooks("preBuild", defContext.DefinitionPath)
+				targetDef := this.Definition.Targets[targetIndex]
+				targetDef.ExecuteHooks("preBuild", this.DefinitionPath)
 
-				outputDir := filepath.Dir(fmt.Sprintf("%s/%s", defContext.DefinitionPath, targetDef.Output))
+				outputDir := filepath.Dir(fmt.Sprintf("%s/%s", this.DefinitionPath, targetDef.Output))
 
 				if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 					log.Fatalf("ERROR: %s\n", err.Error())
@@ -319,7 +319,7 @@ func (defContext *DefinitionContext) Build(verbose bool) error {
 				}
 
 				command := exec.Command(shellCommand[1], shellCommand[2:]...)
-				command.Dir = defContext.DefinitionPath
+				command.Dir = this.DefinitionPath
 				command.Stdout = os.Stdout
 				command.Stderr = os.Stderr
 
@@ -327,7 +327,7 @@ func (defContext *DefinitionContext) Build(verbose bool) error {
 					log.Fatalf("ERROR: %s\n", err.Error())
 				}
 
-				targetDef.ExecuteHooks("postBuild", defContext.DefinitionPath)
+				targetDef.ExecuteHooks("postBuild", this.DefinitionPath)
 			}
 		}(strings.Split(string(bytes), "\n"))
 		return nil

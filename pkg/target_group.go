@@ -13,11 +13,11 @@ type TargetGroup struct {
 	Targets []int
 }
 
-func (targetGroup *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[]*DefinitionContext) ([]string, error) {
+func (this *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[]*DefinitionContext) ([]string, error) {
 	buildCommands := []string{}
 
-	for i := len(targetGroup.Targets) - 1; i >= 0; i-- {
-		targetIndex := targetGroup.Targets[i]
+	for i := len(this.Targets) - 1; i >= 0; i-- {
+		targetIndex := this.Targets[i]
 		targetDef := defContext.Definition.Targets[targetIndex]
 
 		targetDef.ExecuteHooks("preConfigure", defContext.DefinitionPath)

@@ -14,14 +14,14 @@ type TargetHook struct {
 	Command string `yaml:"command"`
 }
 
-func (targetHook *TargetHook) Execute(workingDir string) {
+func (this *TargetHook) Execute(workingDir string) {
 	shell, err := parseUserShell()
 
 	if err != nil {
 		log.Fatalf("ERROR: %s\n", err.Error())
 	}
 
-	command := exec.Command(shell, "-c", targetHook.Command)
+	command := exec.Command(shell, "-c", this.Command)
 	command.Dir = workingDir
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr

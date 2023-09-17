@@ -70,7 +70,7 @@ func (this *DefinitionContext) sanitize() error {
 	return nil
 }
 
-func (this *DefinitionContext) IsConfigured(expectedFileCount int) (bool, error) {
+func (this *DefinitionContext) isConfigured(expectedFileCount int) (bool, error) {
 	entries, err := os.ReadDir(this.ConfigureDir)
 
 	if err != nil {
@@ -88,7 +88,7 @@ func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContex
 	graphs := this.Definition.GenerateDependencyGraphs()
 	targetGroupMatrix := GenerateTargetGroupMatrix(graphs)
 
-	alreadyConfigured, err := this.IsConfigured(len(targetGroupMatrix))
+	alreadyConfigured, err := this.isConfigured(len(targetGroupMatrix))
 
 	if err != nil {
 		return err

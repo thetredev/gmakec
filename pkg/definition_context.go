@@ -135,42 +135,56 @@ func FindRefTarget(targetName string, defContexts *[]*DefinitionContext) (*Defin
 	return nil, nil
 }
 
-func FindRefTargetStringValue(
-	refString string, targetDef *TargetDefinition, defContexts *[]*DefinitionContext,
-) (string, error) {
+func FindRefData(refString string, defContexts *[]*DefinitionContext) (string, *DefinitionContext, *TargetDefinition, error) {
 	ref := strings.Split(refString, ":")
+
+	if len(ref) < 2 {
+		return "", nil, nil, fmt.Errorf("Incorrect format for target reference: `%s`!", refString)
+	}
+
 	refContext, refTarget := FindRefTarget(ref[0], defContexts)
 
 	if refContext == nil || refTarget == nil {
-		return "", fmt.Errorf("Could not find referenced target of name `%s`!", ref[0])
+		return "", nil, nil, fmt.Errorf("Could not find referenced target of name `%s`!", ref[0])
 	}
 
-	refFieldValue, err := refTarget.FieldStringValue(ref[1], refContext)
+	return ref[1], refContext, refTarget, nil
+}
+
+func FindRefTargetStringValue(
+	refString string, targetDef *TargetDefinition, defContexts *[]*DefinitionContext,
+) (string, error) {
+	fieldName, refContext, refTarget, err := FindRefData(refString, defContexts)
+
+	if err != nil {
+		return "", nil
+	}
+
+	fieldValue, err := refTarget.FieldStringValue(fieldName, refContext)
 
 	if err != nil {
 		return "", err
 	}
 
-	return refFieldValue, nil
+	return fieldValue, nil
 }
 
 func FindRefTargetStringArrayValue(
 	refString string, targetDef *TargetDefinition, defContexts *[]*DefinitionContext,
 ) ([]string, error) {
-	ref := strings.Split(refString, ":")
-	refContext, refTarget := FindRefTarget(ref[0], defContexts)
+	fieldName, refContext, refTarget, err := FindRefData(refString, defContexts)
 
-	if refContext == nil || refTarget == nil {
-		return nil, fmt.Errorf("Could not find referenced target of name `%s`!", ref[0])
+	if err != nil {
+		return nil, nil
 	}
 
-	refFieldValue, err := refTarget.FieldStringArrayValue(ref[1], refContext)
+	fieldValue, err := refTarget.FieldStringArrayValue(fieldName, refContext)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return refFieldValue, nil
+	return fieldValue, nil
 }
 
 func (defContext *DefinitionContext) IsConfigured(expectedFileCount int) (bool, error) {

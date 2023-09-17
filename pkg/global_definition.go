@@ -65,12 +65,35 @@ func (this *GlobalDefinition) sanitizeVersion() error {
 	return nil
 }
 
+func (this *GlobalDefinition) sanitizeCompilers() error {
+	for index, compilerDef := range this.Compilers {
+		if len(compilerDef.Path) == 0 {
+			return fmt.Errorf(
+				"Global compiler definition of name `%s` (index %d) need to have the field `path` set!",
+				compilerDef.Name, index,
+			)
+		}
+		if len(compilerDef.Name) == 0 {
+			return fmt.Errorf(
+				"Global compiler definition with path `%s` (index %d) need to have the field `name` set!",
+				compilerDef.Path, index,
+			)
+		}
+	}
+
+	return nil
+}
+
 func (this *GlobalDefinition) sanitize() error {
 	if err := this.sanitizeVersion(); err != nil {
 		return err
 	}
 
 	if err := this.sanitizeTargets(); err != nil {
+		return err
+	}
+
+	if err := this.sanitizeCompilers(); err != nil {
 		return err
 	}
 

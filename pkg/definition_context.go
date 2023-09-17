@@ -148,8 +148,8 @@ func generateTargetGroupMatrix(graphs [][]int) [][]int {
 	return targetGroupMatrix
 }
 
-func FindRefTarget(targetName string, defContexts *[]*DefinitionContext) (*DefinitionContext, *TargetDefinition) {
-	for _, defContext := range *defContexts {
+func FindRefTarget(targetName string, refDefinitionContexts *[]*DefinitionContext) (*DefinitionContext, *TargetDefinition) {
+	for _, defContext := range *refDefinitionContexts {
 		for index := range defContext.Definition.Targets {
 			if defContext.Definition.Targets[index].Name == targetName {
 				return defContext, &defContext.Definition.Targets[index]
@@ -160,14 +160,14 @@ func FindRefTarget(targetName string, defContexts *[]*DefinitionContext) (*Defin
 	return nil, nil
 }
 
-func FindRefData(refString string, defContexts *[]*DefinitionContext) (string, *DefinitionContext, *TargetDefinition, error) {
+func FindRefData(refString string, definitionContexts *[]*DefinitionContext) (string, *DefinitionContext, *TargetDefinition, error) {
 	ref := strings.Split(refString, ":")
 
 	if len(ref) < 2 {
 		return "", nil, nil, fmt.Errorf("Incorrect format for target reference: `%s`!", refString)
 	}
 
-	refContext, refTarget := FindRefTarget(ref[0], defContexts)
+	refContext, refTarget := FindRefTarget(ref[0], definitionContexts)
 
 	if refContext == nil || refTarget == nil {
 		return "", nil, nil, fmt.Errorf("Could not find referenced target of name `%s`!", ref[0])
@@ -177,9 +177,9 @@ func FindRefData(refString string, defContexts *[]*DefinitionContext) (string, *
 }
 
 func FindRefTargetStringValue(
-	refString string, targetDef *TargetDefinition, defContexts *[]*DefinitionContext,
+	refString string, targetDefinition *TargetDefinition, definitionContexts *[]*DefinitionContext,
 ) (string, error) {
-	fieldName, refContext, refTarget, err := FindRefData(refString, defContexts)
+	fieldName, refContext, refTarget, err := FindRefData(refString, definitionContexts)
 
 	if err != nil {
 		return "", nil
@@ -195,9 +195,9 @@ func FindRefTargetStringValue(
 }
 
 func FindRefTargetStringArrayValue(
-	refString string, targetDef *TargetDefinition, defContexts *[]*DefinitionContext,
+	refString string, targetDefinition *TargetDefinition, definitionContexts *[]*DefinitionContext,
 ) ([]string, error) {
-	fieldName, refContext, refTarget, err := FindRefData(refString, defContexts)
+	fieldName, refContext, refTarget, err := FindRefData(refString, definitionContexts)
 
 	if err != nil {
 		return nil, nil
@@ -226,7 +226,7 @@ func (this *DefinitionContext) IsConfigured(expectedFileCount int) (bool, error)
 	return len(entries) == expectedFileCount, nil
 }
 
-func (this *DefinitionContext) Configure(defContexts *[]*DefinitionContext) error {
+func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContext) error {
 	graphs := this.Definition.GenerateDependencyGraphs()
 	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
@@ -253,7 +253,7 @@ func (this *DefinitionContext) Configure(defContexts *[]*DefinitionContext) erro
 			Targets: targetGroupIndices,
 		}
 
-		buildCommands, err := targetGroup.Configure(this, defContexts)
+		buildCommands, err := targetGroup.Configure(this, definitionContexts)
 
 		if err != nil {
 			return err

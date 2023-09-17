@@ -64,6 +64,25 @@ func (defContext *DefinitionContext) Sanitize() error {
 	return nil
 }
 
+// Don't ask me why this works.
+// This "algorithm" came about when I was trying to create the dependency graph.
+// Maybe there's some maths formulae or algorithms which would improve this code.
+// However, it works at the moment and is actually not slow (at least on my machine).
+//
+// Basically it figures out which targets to build first and puts them in a "matrix".
+// Example:
+//
+//	Target index 0: no dependencies
+//	Target index 1: dependency on target 0
+//	Target index 2: no dependencies
+//	Target index 3: dependency on target 1
+//
+// Would result in: [[0, 1, 3] [2]]
+// Targets will be built in exactly the order of the two target groups (inner arrays).
+// The target groups will also be built in parallel.
+//
+// I'm always open for suggestions. :)
+// ~ thetredev
 func generateTargetGroupMatrix(graphs [][]int) [][]int {
 	targetGroupMatrix := [][]int{}
 

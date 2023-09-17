@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/yargevad/filepathx"
@@ -100,16 +101,20 @@ func (this *TargetGroup) configure(
 		buildCommand = append(buildCommand, targetDef.Output)
 
 		for _, source := range targetDef.Sources {
-			if strings.Contains(source, "*") {
-				globbed, err := filepathx.Glob(source)
+			if len(source.Platform) > 0 && runtime.GOOS != source.Platform {
+				continue
+			}
+
+			if strings.Contains(source.Path, "*") {
+				globbed, err := filepathx.Glob(source.Path)
 
 				if err != nil {
 					return nil, err
 				}
 
 				buildCommand = append(buildCommand, globbed...)
-			} else if strings.Contains(source, ":") {
-				refStringValue, err := findRefTargetStringValue(source, &targetDef, definitionContexts)
+			} else if strings.Contains(source.Path, ":") {
+				refStringValue, err := findRefTargetStringValue(source.Path, &targetDef, definitionContexts)
 
 				if err != nil {
 					return nil, err
@@ -117,7 +122,7 @@ func (this *TargetGroup) configure(
 
 				buildCommand = append(buildCommand, refStringValue)
 			} else {
-				buildCommand = append(buildCommand, source)
+				buildCommand = append(buildCommand, source.Path)
 			}
 		}
 

@@ -12,7 +12,7 @@ type TargetDefinition struct {
 	Compiler       CompilerDefinition `yaml:"compiler"`
 	ConfigureFiles []ConfigureFile    `yaml:"configure_files"`
 	Defines        []string           `yaml:"defines"`
-	Sources        []string           `yaml:"sources"`
+	Sources        []SourceDefinition `yaml:"sources"`
 	Includes       []string           `yaml:"includes"`
 	Links          []LinkDefinition   `yaml:"links"`
 	Output         string             `yaml:"output"`

@@ -9,7 +9,7 @@ targets:
         - -Wextra
         - -pedantic
     sources:
-      - src/*.c
+      - path: src/*.c
     includes:
       - include/**
     output: build/simple-example

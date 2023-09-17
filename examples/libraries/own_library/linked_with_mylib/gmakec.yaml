@@ -21,7 +21,7 @@ targets:
       - DEFINE_WITH_STRING_VALUE="hello"
       - DEFINE_WITH_STRING_NUMBER_VALUE="420"
     sources:
-      - src/main.c
+      - path: src/main.c
     includes:
       - libobject:includes
     links:

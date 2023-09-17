@@ -7,5 +7,5 @@ targets:
       - source: version.h.in
         destination: version.h
     sources:
-      - main.c
+      - path: main.c
     output: build/version_check

@@ -20,7 +20,7 @@ targets:
         - -c
         - -fPIC
     sources:
-      - mylib.c
+      - path: mylib.c
     includes:
       - .
     output: lib/myownlib.o
@@ -34,7 +34,7 @@ targets:
         - -Wl,-soname,libmyown.so
         - -lc
     sources:
-      - libobject:output
+      - path: libobject:output
     output: lib/libmyown.so
     dependencies:
       - libobject

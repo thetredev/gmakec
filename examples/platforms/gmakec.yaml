@@ -1,0 +1,17 @@
+version: "1.0.0"
+
+targets:
+  - compiler:
+      path: gcc
+    includes:
+      - include
+    sources:
+      - path: src/main.c
+      - path: src/shared/*.c
+      - path: src/linux/linux.c
+        platform: linux
+      - path: src/windows/windows.c
+        platform: windows
+      - path: src/darwin/darwin.c
+        platform: darwin
+    output: build/platforms

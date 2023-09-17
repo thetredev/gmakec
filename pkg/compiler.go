@@ -9,6 +9,7 @@ import (
 type Compiler struct {
 	Name              string
 	Path              string
+	DefineFlag        string
 	IncludeSearchFlag string
 	LinkSearchFlag    string
 	OutputFlag        string
@@ -25,6 +26,7 @@ func fromCompilerTemplate(compilerTemplate *Compiler, name string) *Compiler {
 
 func InitCompilers() {
 	compilerTemplate := &Compiler{
+		DefineFlag:        "-D",
 		IncludeSearchFlag: "-I",
 		LinkSearchFlag:    "-L",
 		OutputFlag:        "-o",

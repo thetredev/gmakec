@@ -38,6 +38,11 @@ func (this *TargetGroup) configure(
 
 		buildCommand = append(buildCommand, compilerDef.Flags...)
 
+		for _, define := range targetDef.Defines {
+			buildCommand = append(buildCommand, compilerDef.Object.DefineFlag)
+			buildCommand = append(buildCommand, define)
+		}
+
 		for _, include := range targetDef.Includes {
 			includeStrings := []string{}
 

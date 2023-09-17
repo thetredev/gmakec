@@ -10,6 +10,7 @@ import (
 type TargetDefinition struct {
 	Name         string             `yaml:"name"`
 	Compiler     CompilerDefinition `yaml:"compiler"`
+	Defines      []string           `yaml:"defines"`
 	Sources      []string           `yaml:"sources"`
 	Includes     []string           `yaml:"includes"`
 	Links        []LinkDefinition   `yaml:"links"`

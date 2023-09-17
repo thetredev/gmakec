@@ -206,10 +206,6 @@ func (defContext *DefinitionContext) Configure(defContexts *[]*DefinitionContext
 
 		buildCommands, err := targetGroup.Configure(defContext, defContexts)
 
-		for _, targetIndex := range targetGroupIndices {
-			defContext.Definition.Targets[targetIndex].ExecuteHooks("postConfigure", defContext.DefinitionPath)
-		}
-
 		if err != nil {
 			return err
 		}

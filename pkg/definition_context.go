@@ -147,16 +147,19 @@ func (this *DefinitionContext) Build(verbose bool) error {
 				targetIndex, err := strconv.Atoi(shellCommand[0])
 
 				if err != nil {
-					log.Fatalf("ERROR: %s\n", err.Error())
+					log.Fatal(err)
 				}
 
 				targetDef := this.Definition.Targets[targetIndex]
-				targetDef.executeHooks("preBuild", this.DefinitionPath)
+
+				if err := targetDef.executeHooks("preBuild", this.DefinitionPath); err != nil {
+					log.Fatal(err)
+				}
 
 				outputDir := filepath.Dir(fmt.Sprintf("%s/%s", this.DefinitionPath, targetDef.Output))
 
 				if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
-					log.Fatalf("ERROR: %s\n", err.Error())
+					log.Fatal(err)
 				}
 
 				if verbose {
@@ -166,10 +169,12 @@ func (this *DefinitionContext) Build(verbose bool) error {
 				command := exec.Command(shellCommand[1], shellCommand[2:]...)
 
 				if err := executeCommand(command, this.DefinitionPath); err != nil {
-					log.Fatalf("ERROR: %s\n", err.Error())
+					log.Fatal(err)
 				}
 
-				targetDef.executeHooks("postBuild", this.DefinitionPath)
+				if err := targetDef.executeHooks("postBuild", this.DefinitionPath); err != nil {
+					log.Fatal(err)
+				}
 			}
 		}(strings.Split(string(bytes), "\n"))
 		return nil

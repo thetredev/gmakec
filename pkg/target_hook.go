@@ -1,7 +1,6 @@
 package gmakec
 
 import (
-	"log"
 	"os/exec"
 	"strings"
 )
@@ -12,13 +11,7 @@ type TargetHook struct {
 	Command string `yaml:"command"`
 }
 
-func (this *TargetHook) doExecute(command *exec.Cmd, workingDir string) {
-	if err := executeCommand(command, workingDir); err != nil {
-		log.Fatalf("ERROR: %s\n", err.Error())
-	}
-}
-
-func (this *TargetHook) executeWithShell(shellString string, workingDir string) {
+func (this *TargetHook) executeWithShell(shellString string, workingDir string) error {
 	commandPrefix := strings.Split(shellString, " ")
 	var command *exec.Cmd
 
@@ -29,10 +22,10 @@ func (this *TargetHook) executeWithShell(shellString string, workingDir string) 
 	}
 
 	command.Args = append(command.Args, this.Command)
-	this.doExecute(command, workingDir)
+	return executeCommand(command, workingDir)
 }
 
-func (this *TargetHook) executeWithoutShell(workingDir string) {
+func (this *TargetHook) executeWithoutShell(workingDir string) error {
 	args := strings.Split(this.Command, " ")
 	command := exec.Command(args[0])
 
@@ -40,10 +33,10 @@ func (this *TargetHook) executeWithoutShell(workingDir string) {
 		command.Args = append(command.Args, args[1:]...)
 	}
 
-	this.doExecute(command, workingDir)
+	return executeCommand(command, workingDir)
 }
 
-func (this *TargetHook) execute(workingDir string) {
+func (this *TargetHook) execute(workingDir string) error {
 	shellString := this.Shell
 
 	if shellString == "none" {
@@ -51,8 +44,8 @@ func (this *TargetHook) execute(workingDir string) {
 	}
 
 	if len(shellString) > 0 {
-		this.executeWithShell(shellString, workingDir)
-	} else {
-		this.executeWithoutShell(workingDir)
+		return this.executeWithShell(shellString, workingDir)
 	}
+
+	return this.executeWithoutShell(workingDir)
 }

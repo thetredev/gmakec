@@ -21,12 +21,16 @@ type TargetDefinition struct {
 	Hooks          []TargetHook       `yaml:"hooks"`
 }
 
-func (this *TargetDefinition) executeHooks(step string, workingDir string) {
+func (this *TargetDefinition) executeHooks(step string, workingDir string) error {
 	for _, targetHook := range this.Hooks {
 		if targetHook.Step == step {
-			targetHook.execute(workingDir)
+			if err := targetHook.execute(workingDir); err != nil {
+				return fmt.Errorf("ERROR: Could not execute %s hook: %s\n", step, err.Error())
+			}
 		}
 	}
+
+	return nil
 }
 
 func (this *TargetDefinition) findField(fieldName string) *structs.Field {

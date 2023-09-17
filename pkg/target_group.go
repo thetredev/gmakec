@@ -23,7 +23,9 @@ func (this *TargetGroup) configure(
 		targetIndex := this.Targets[i]
 		targetDef := definitionContext.Definition.Targets[targetIndex]
 
-		targetDef.executeHooks("preConfigure", definitionContext.DefinitionPath)
+		if err := targetDef.executeHooks("preConfigure", definitionContext.DefinitionPath); err != nil {
+			return nil, err
+		}
 
 		// merge compiler flags
 		compilerDef, err := targetDef.Compiler.withRef(&definitionContext.Definition.Compilers)
@@ -133,7 +135,10 @@ func (this *TargetGroup) configure(
 		}
 
 		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
-		targetDef.executeHooks("postConfigure", definitionContext.DefinitionPath)
+
+		if err = targetDef.executeHooks("postConfigure", definitionContext.DefinitionPath); err != nil {
+			return nil, err
+		}
 	}
 
 	return buildCommands, nil

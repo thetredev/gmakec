@@ -1,9 +1,6 @@
 description: mylib gmakec sample
 version: "1.0.0"
 
-imports:
-  - ../independent
-
 compilers:
   - name: gcc-default
     path: gcc
@@ -23,7 +20,7 @@ targets:
       - path: mylib.c
     includes:
       - .
-    output: lib/myownlib.o
+    output: build/myownlib.o
 
   - name: libso
     compiler:
@@ -35,6 +32,6 @@ targets:
         - -lc
     sources:
       - path: libobject:output
-    output: lib/libmyown.so
+    output: build/libmyown.so
     dependencies:
       - libobject

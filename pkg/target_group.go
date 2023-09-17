@@ -2,7 +2,6 @@ package gmakec
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -69,12 +68,6 @@ func (targetGroup *TargetGroup) Configure(defContext *DefinitionContext, defCont
 
 		buildCommand = append(buildCommand, "-o")
 		buildCommand = append(buildCommand, targetDef.Output)
-
-		if defContext.DefinitionPath == "." {
-			if err := os.MkdirAll(filepath.Dir(targetDef.Output), os.ModePerm); err != nil {
-				return nil, err
-			}
-		}
 
 		for _, source := range targetDef.Sources {
 			if strings.Contains(source, "*") {

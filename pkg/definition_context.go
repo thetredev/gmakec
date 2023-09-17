@@ -269,6 +269,12 @@ func (defContext *DefinitionContext) Build() error {
 				targetDef := defContext.Definition.Targets[targetIndex]
 				targetDef.ExecuteHooks("preBuild", defContext.DefinitionPath)
 
+				outputDir := filepath.Dir(fmt.Sprintf("%s/%s", defContext.DefinitionPath, targetDef.Output))
+
+				if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+					log.Fatalf("ERROR: %s\n", err.Error())
+				}
+
 				command := exec.Command(shellCommand[1], shellCommand[2:]...)
 				command.Dir = defContext.DefinitionPath
 				command.Stdout = os.Stdout

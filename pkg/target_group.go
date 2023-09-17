@@ -11,17 +11,17 @@ type TargetGroup struct {
 	Targets []int
 }
 
-func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string, error) {
+func (targetGroup *TargetGroup) Configure(defContext *DefinitionContext, defContexts *[]*DefinitionContext) ([]string, error) {
 	buildCommands := []string{}
 
 	for i := len(targetGroup.Targets) - 1; i >= 0; i-- {
 		targetIndex := targetGroup.Targets[i]
-		targetDef := globalDef.Targets[targetIndex]
+		targetDef := defContext.Definition.Targets[targetIndex]
 
-		targetDef.ExecuteHooks("preConfigure")
+		targetDef.ExecuteHooks("preConfigure", defContext.DefinitionPath)
 
 		// merge compiler flags
-		compilerDef, err := targetDef.Compiler.WithRef(&globalDef.Compilers)
+		compilerDef, err := targetDef.Compiler.WithRef(&defContext.Definition.Compilers)
 
 		if err != nil {
 			return nil, err
@@ -35,8 +35,21 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 		buildCommand = append(buildCommand, compilerDef.Flags...)
 
 		for _, include := range targetDef.Includes {
-			buildCommand = append(buildCommand, "-I")
-			buildCommand = append(buildCommand, include)
+			if strings.Contains(include, ":") {
+				refStringArrayValue, err := FindRefTargetStringArrayValue(include, &targetDef, defContexts)
+
+				if err != nil {
+					return nil, err
+				}
+
+				for _, value := range refStringArrayValue {
+					buildCommand = append(buildCommand, "-I")
+					buildCommand = append(buildCommand, value)
+				}
+			} else {
+				buildCommand = append(buildCommand, "-I")
+				buildCommand = append(buildCommand, include)
+			}
 		}
 
 		for _, link := range targetDef.Links {
@@ -45,7 +58,7 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 				linkPath := link.Path
 
 				if strings.Contains(linkPath, ":") {
-					linkPath, err = globalDef.RefTargetStringValue(linkPath, &targetDef)
+					linkPath, err = FindRefTargetStringValue(linkPath, &targetDef, defContexts)
 				}
 
 				buildCommand = append(buildCommand, filepath.Dir(linkPath))
@@ -57,8 +70,10 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 		buildCommand = append(buildCommand, "-o")
 		buildCommand = append(buildCommand, targetDef.Output)
 
-		if err := os.MkdirAll(filepath.Dir(targetDef.Output), os.ModePerm); err != nil {
-			return nil, err
+		if defContext.DefinitionPath == "." {
+			if err := os.MkdirAll(filepath.Dir(targetDef.Output), os.ModePerm); err != nil {
+				return nil, err
+			}
 		}
 
 		for _, source := range targetDef.Sources {
@@ -71,7 +86,7 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 
 				buildCommand = append(buildCommand, globbed...)
 			} else if strings.Contains(source, ":") {
-				refStringValue, err := globalDef.RefTargetStringValue(source, &targetDef)
+				refStringValue, err := FindRefTargetStringValue(source, &targetDef, defContexts)
 
 				if err != nil {
 					return nil, err
@@ -84,7 +99,7 @@ func (targetGroup *TargetGroup) Configure(globalDef *GlobalDefinition) ([]string
 		}
 
 		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
-		targetDef.ExecuteHooks("postConfigure")
+		targetDef.ExecuteHooks("postConfigure", defContext.DefinitionPath)
 	}
 
 	return buildCommands, nil

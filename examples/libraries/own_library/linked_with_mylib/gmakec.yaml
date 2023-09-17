@@ -1,6 +1,9 @@
 description: Own library linkage gmakec sample
 version: "1.0.0"
 
+imports:
+  - ../mylib
+
 compilers:
   - name: gcc-default
     path: gcc
@@ -33,38 +36,12 @@ targets:
       - step: postBuild
         command: echo "postBuild independent second ${HOME}"
 
-  - name: libobject
-    compiler:
-      ref: gcc-default
-      flags:
-        - -c
-        - -fPIC
-    sources:
-      - ../mylib/mylib.c
-    includes:
-      - ../mylib
-    output: ../mylib/lib/myownlib.o
-
-  - name: libso
-    compiler:
-      ref: gcc-default
-      flags:
-        - -shared
-        - -fPIC
-        - -Wl,-soname,libmyown.so
-        - -lc
-    sources:
-      - libobject:output
-    output: ../mylib/lib/libmyown.so
-    dependencies:
-      - libobject
-
   - compiler:
       ref: gcc-default
     sources:
       - src/main.c
     includes:
-      - ../mylib
+      - libobject:includes
     links:
       - path: libso:output
         link: -lmyown

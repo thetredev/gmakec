@@ -1,0 +1,37 @@
+description: mylib gmakec sample
+version: "1.0.0"
+
+compilers:
+  - name: gcc-default
+    path: gcc
+    flags:
+      - -Wall
+      - -Wextra
+      - -pedantic
+
+targets:
+  - name: libobject
+    compiler:
+      ref: gcc-default
+      flags:
+        - -c
+        - -fPIC
+    sources:
+      - mylib.c
+    includes:
+      - .
+    output: lib/myownlib.o
+
+  - name: libso
+    compiler:
+      ref: gcc-default
+      flags:
+        - -shared
+        - -fPIC
+        - -Wl,-soname,libmyown.so
+        - -lc
+    sources:
+      - libobject:output
+    output: lib/libmyown.so
+    dependencies:
+      - libobject

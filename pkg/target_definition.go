@@ -18,26 +18,46 @@ type TargetDefinition struct {
 	Hooks        []TargetHook       `yaml:"hooks"`
 }
 
-func (targetDef *TargetDefinition) ExecuteHooks(step string) {
+func (targetDef *TargetDefinition) ExecuteHooks(step string, workingDir string) {
 	for _, targetHook := range targetDef.Hooks {
 		if targetHook.Step == step {
-			targetHook.Execute()
+			targetHook.Execute(workingDir)
 		}
 	}
 }
 
-func (targetDef *TargetDefinition) FieldStringValue(fieldName string) (string, error) {
+func (targetDef *TargetDefinition) FieldStringValue(fieldName string, defContext *DefinitionContext) (string, error) {
 	fields := structs.Fields(targetDef)
 
 	for _, field := range fields {
 		tag := field.Tag("yaml")
 
 		if tag == fieldName {
-			return fmt.Sprintf("%s", field.Value()), nil
+			return fmt.Sprintf("%s/%s", defContext.DefinitionPath, field.Value().(string)), nil
 		}
 	}
 
 	return "", fmt.Errorf("Could not find field `%s`", fieldName)
+}
+
+func (targetDef *TargetDefinition) FieldStringArrayValue(fieldName string, defContext *DefinitionContext) ([]string, error) {
+	fields := structs.Fields(targetDef)
+
+	for _, field := range fields {
+		tag := field.Tag("yaml")
+
+		if tag == fieldName {
+			result := []string{}
+
+			for _, value := range field.Value().([]string) {
+				result = append(result, fmt.Sprintf("%s/%s", defContext.DefinitionPath, value))
+			}
+
+			return result, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Could not find field `%s`", fieldName)
 }
 
 func (targetDef *TargetDefinition) DependencyGraph(index int, targetDefs *[]TargetDefinition) []int {

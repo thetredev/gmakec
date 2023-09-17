@@ -1,12 +1,11 @@
 package gmakec
 
-import "strings"
-
 type GlobalDefinition struct {
 	Description string               `yaml:"description"` // unused atm
 	Version     string               `yaml:"version"`     // unused atm
 	Compilers   []CompilerDefinition `yaml:"compilers"`
 	Targets     []TargetDefinition   `yaml:"targets"`
+	Imports     []string             `yaml:"imports"`
 }
 
 func (globalDef *GlobalDefinition) GenerateDependencyGraphs() [][]int {
@@ -17,26 +16,4 @@ func (globalDef *GlobalDefinition) GenerateDependencyGraphs() [][]int {
 	}
 
 	return graphs
-}
-
-func (globalDef *GlobalDefinition) FindRefTarget(targetName string) *TargetDefinition {
-	for index := range globalDef.Targets {
-		if globalDef.Targets[index].Name == targetName {
-			return &globalDef.Targets[index]
-		}
-	}
-
-	return nil
-}
-
-func (globalDef *GlobalDefinition) RefTargetStringValue(refString string, targetDef *TargetDefinition) (string, error) {
-	ref := strings.Split(refString, ":")
-	refTarget := globalDef.FindRefTarget(ref[0])
-	refFieldValue, err := refTarget.FieldStringValue(ref[1])
-
-	if err != nil {
-		return "", err
-	}
-
-	return refFieldValue, nil
 }

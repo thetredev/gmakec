@@ -14,7 +14,7 @@ targets:
       ref: gcc-default
     defines:
       - DEFINE_WITHOUT_VALUE
-      - DEFINE_WITH_INT_VALUE=64
+      - DEFINE_WITH_INT_VALUE=69
       - DEFINE_WITH_STRING_VALUE="hello"
       - DEFINE_WITH_STRING_NUMBER_VALUE="420"
     sources:

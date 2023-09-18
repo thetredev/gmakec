@@ -13,7 +13,7 @@ int main() {
     fprintf(stderr, "DEFINE_WITH_INT_VALUE is not defined!\n");
     abort();
 #else
-    assert(DEFINE_WITH_INT_VALUE == 64);
+    assert(DEFINE_WITH_INT_VALUE == 69);
 #endif // DEFINE_WITH_INT_VALUE
 
 #ifndef DEFINE_WITH_STRING_VALUE

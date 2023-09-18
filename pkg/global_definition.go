@@ -18,33 +18,6 @@ type GlobalDefinition struct {
 	VersionTweak string
 }
 
-func (this *GlobalDefinition) sanitizeTargets(definitionContext *DefinitionContext) error {
-	t := make([]TargetDefinition, 0)
-
-	for index, targetDef := range this.Targets {
-		if len(targetDef.Platform) > 0 && runtime.GOOS != targetDef.Platform {
-			continue
-		}
-
-		if len(targetDef.Output) == 0 {
-			return fmt.Errorf(
-				"Target of definition path `%s` and index %d has no output!",
-				definitionContext.DefinitionPath,
-				index,
-			)
-		}
-
-		t = append(t, targetDef)
-	}
-
-	if len(t) == 0 {
-		return fmt.Errorf("No targets left to build after sanitizing targets!\n")
-	}
-
-	this.Targets = t
-	return nil
-}
-
 func (this *GlobalDefinition) sanitizeVersion() error {
 	if !strings.Contains(this.Version, ".") {
 		return fmt.Errorf(
@@ -70,6 +43,33 @@ func (this *GlobalDefinition) sanitizeVersion() error {
 		}
 	}
 
+	return nil
+}
+
+func (this *GlobalDefinition) sanitizeTargets(definitionContext *DefinitionContext) error {
+	t := make([]TargetDefinition, 0)
+
+	for index, targetDef := range this.Targets {
+		if len(targetDef.Platform) > 0 && runtime.GOOS != targetDef.Platform {
+			continue
+		}
+
+		if len(targetDef.Output) == 0 {
+			return fmt.Errorf(
+				"Target of definition path `%s` and index %d has no output!",
+				definitionContext.DefinitionPath,
+				index,
+			)
+		}
+
+		t = append(t, targetDef)
+	}
+
+	if len(t) == 0 {
+		return fmt.Errorf("No targets left to build after sanitizing targets!\n")
+	}
+
+	this.Targets = t
 	return nil
 }
 

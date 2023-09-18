@@ -25,7 +25,7 @@ actions:
         - print: <capture:stdout>
         - dump:
             # <name:sanitized> replaces all invalid characters of <name> to underscores, e.g.
-            #  " " => "_"
+            #  "?" => "_"
             #  "/" => "_"
             #  ....
             file: /tmp/<name:sanitized>_success.txt

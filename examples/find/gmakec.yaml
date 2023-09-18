@@ -1,0 +1,26 @@
+description: Find gmakec sample
+version: "1.0.0"
+
+compilers:
+  - name: gcc-default
+    path: gcc
+    flags:
+      - -Wall
+      - -Wextra
+      - -pedantic
+    find:
+      - type: filesystem
+        names:
+          - python3
+      - type: filesystem
+        names:
+          - gopls
+        paths:
+          - ~/go/bin
+
+targets:
+  - compiler:
+      ref: gcc-default
+    sources:
+      - path: main.c
+    output: build/find

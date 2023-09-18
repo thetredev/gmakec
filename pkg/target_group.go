@@ -28,7 +28,7 @@ func (this *TargetGroup) configure(
 		}
 
 		// merge compiler flags
-		compilerDef, err := targetDef.Compiler.withRef(&definitionContext.Definition.Compilers)
+		compilerDef, err := targetDef.Compiler.sanitize(&definitionContext.Definition.Compilers)
 
 		if err != nil {
 			return nil, err

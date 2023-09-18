@@ -20,13 +20,7 @@ type CompilerDefinition struct {
 func (this *CompilerDefinition) findRef(refCompilerDefinitions *[]CompilerDefinition) *CompilerDefinition {
 	for _, refCompilerDefinition := range *refCompilerDefinitions {
 		if refCompilerDefinition.Name == this.Ref {
-			return &CompilerDefinition{
-				Name:  refCompilerDefinition.Name,
-				Path:  refCompilerDefinition.Path,
-				Ref:   refCompilerDefinition.Ref,
-				Flags: refCompilerDefinition.Flags,
-				Find:  refCompilerDefinition.Find,
-			}
+			return &refCompilerDefinition
 		}
 	}
 

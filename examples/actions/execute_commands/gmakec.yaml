@@ -68,6 +68,6 @@ targets:
               on_failure:
                 handle:
                   - print: From target hook. Adding define "PRE_CONFIGURE_FAILED=1"
-                  - define: "PRE_CONFIGURE_FAILED=1"
+                  - define: PRE_CONFIGURE_FAILED=1
                 continue: true
     output: build/action_execute_commands

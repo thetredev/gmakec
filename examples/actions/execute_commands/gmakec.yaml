@@ -1,0 +1,73 @@
+version: "1.0.0"
+
+compilers:
+  - name: gcc-default
+    path: gcc
+
+actions:
+  - name: python-version
+    description: Define python version as compiler option
+    # use shell capabilities, can be omitted if not needed
+    shell: bash -c
+    command: python -V | cut -d ' ' -f 2
+    # add environment variables
+    environment:
+      - ${PATH}
+    # handle output in various forms
+    output:
+      capture:
+        # These will be "variables" which you can use further down, like:
+        #  <capture:stdout> and <capture:stderr>
+        - stdout
+        - stderr
+      on_success:
+        - define: SYSTEM_PYTHON_VERSION="<capture:stdout>"
+        - print: <capture:stdout>
+        - dump:
+            # <name:sanitized> replaces all invalid characters of <name> to underscores, e.g.
+            #  " " => "_"
+            #  "/" => "_"
+            #  ....
+            file: /tmp/<name:sanitized>_success.txt
+            text: "The command succeeded with output: <capture:stdout>"
+            mode: create # "create" is default, can also be "append"
+      on_failure:
+        handle:
+          - print: <capture:stderr>
+          - dump:
+              file: /tmp/<name:sanitized>_fail.txt
+              text: "The command failed with output: <capture:stderr>"
+              mode: create
+        # We can continue, because on failure we might set a different define, or define value.
+        # If we want the respective hook to fail at this point, we can set this value to false.
+        continue: false
+
+hooks:
+  - name: my-global-hook
+    step: preConfigure
+    actions:
+      - ref: python-version
+      - command: echo From global hooks
+        output:
+          capture:
+            - stdout
+          on_success:
+            - print: <capture:stdout>
+
+targets:
+  - compiler:
+      ref: gcc-default
+    sources:
+      - path: main.c
+    hooks:
+      - ref: my-global-hook
+      - step: preConfigure
+        actions:
+          - command: exit 1
+            output:
+              on_failure:
+                handle:
+                  - print: From target hook. Adding define "PRE_CONFIGURE_FAILED=1"
+                  - define: "PRE_CONFIGURE_FAILED=1"
+                continue: true
+    output: build/action_execute_commands

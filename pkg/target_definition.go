@@ -18,14 +18,59 @@ type TargetDefinition struct {
 	Links          []LinkDefinition   `yaml:"links"`
 	Output         string             `yaml:"output"`
 	Dependencies   []string           `yaml:"dependencies"`
-	Hooks          []TargetHook       `yaml:"hooks"`
+	Hooks          []HookDefinition   `yaml:"hooks"`
+}
+
+func (this *TargetDefinition) mergeHookRefs(targetIndex int, definitionContext *DefinitionContext) error {
+	for index := range this.Hooks {
+		hook, err := this.Hooks[index].withRef(definitionContext)
+
+		if err != nil {
+			return err
+		}
+
+		this.Hooks[index] = *hook
+	}
+
+	for index, hook := range this.Hooks {
+		if len(hook.Step) == 0 {
+			return fmt.Errorf("Hook with index %d of target with index %d does not define a step!\n", index, targetIndex)
+		}
+
+		if len(hook.Actions) == 0 {
+			return fmt.Errorf(
+				"Hook with index %d (step: %s) of target with index %d does not define any actions!\n",
+				index, hook.Step, targetIndex,
+			)
+		}
+	}
+
+	return nil
 }
 
 func (this *TargetDefinition) executeHooks(step string, workingDir string) error {
 	for _, targetHook := range this.Hooks {
 		if targetHook.Step == step {
-			if err := targetHook.execute(workingDir); err != nil {
-				return fmt.Errorf("ERROR: Could not execute %s hook: %s\n", step, err.Error())
+			for index := range targetHook.Actions {
+				ok, err := targetHook.Actions[index].execute(workingDir)
+
+				if err != nil {
+					return fmt.Errorf("ERROR: Could not execute hook for step `%s`: %s\n", step, err.Error())
+				}
+
+				if ok {
+					for _, successHandle := range targetHook.Actions[index].Output.OnSuccess {
+						successHandle.handle(this, step)
+					}
+				} else {
+					for _, failureHandle := range targetHook.Actions[index].Output.OnFailure.Handle {
+						failureHandle.handle(this, step)
+					}
+
+					if !targetHook.Actions[index].Output.OnFailure.Continue {
+						return fmt.Errorf("ERROR: Execution of hook step `%s` failed!\n", step)
+					}
+				}
 			}
 		}
 	}

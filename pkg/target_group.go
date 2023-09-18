@@ -23,6 +23,10 @@ func (this *TargetGroup) configure(
 		targetIndex := this.Targets[i]
 		targetDef := definitionContext.Definition.Targets[targetIndex]
 
+		if err := targetDef.mergeHookRefs(targetIndex, definitionContext); err != nil {
+			return nil, err
+		}
+
 		if err := targetDef.executeHooks("preConfigure", definitionContext.DefinitionPath); err != nil {
 			return nil, err
 		}

@@ -10,6 +10,8 @@ type GlobalDefinition struct {
 	Description  string               `yaml:"description"` // unused atm
 	Version      string               `yaml:"version"`
 	Compilers    []CompilerDefinition `yaml:"compilers"`
+	Actions      []ActionDefinition   `yaml:"actions"`
+	Hooks        []HookDefinition     `yaml:"hooks"`
 	Targets      []TargetDefinition   `yaml:"targets"`
 	Imports      []string             `yaml:"imports"`
 	VersionMajor string

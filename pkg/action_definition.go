@@ -150,7 +150,7 @@ func (this *ActionHandleDefinition) handle(targetDefinition *TargetDefinition, s
 	}
 
 	if len(this.Print) > 0 {
-		fmt.Println(this.Print)
+		fmt.Printf("[%s:print] %s\n", step, this.Print)
 	}
 
 	if len(this.Dump.File) > 0 {

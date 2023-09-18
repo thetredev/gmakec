@@ -52,6 +52,13 @@ func (this *TargetDefinition) executeHooks(step string, workingDir string) error
 	for _, targetHook := range this.Hooks {
 		if targetHook.Step == step {
 			for index := range targetHook.Actions {
+				message := fmt.Sprintf("[%s] Executing hook", step)
+
+				if len(targetHook.Actions[index].Description) > 0 {
+					message = fmt.Sprintf("%s: %s", message, targetHook.Actions[index].Description)
+				}
+
+				fmt.Printf("%s...\n", message)
 				ok, err := targetHook.Actions[index].execute(workingDir)
 
 				if err != nil {

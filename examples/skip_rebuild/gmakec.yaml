@@ -1,0 +1,26 @@
+description: Skip rebuild example
+version: "1.0.0"
+
+targets:
+  - name: main1
+    compiler:
+      path: gcc
+      flags:
+        - -Wall
+        - -Wextra
+        - -pedantic
+    sources:
+      - path: src/main1.c
+    output: build/main1
+
+  - name: main2
+    compiler:
+      path: gcc
+      flags:
+        - -Wall
+        - -Wextra
+        - -pedantic
+    sources:
+      - path: src/main2.c
+    output: build/main2
+

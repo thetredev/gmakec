@@ -51,39 +51,15 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 	return defContext, nil
 }
 
-func (this *DefinitionContext) isConfigured(expectedFileCount int) (bool, error) {
-	entries, err := os.ReadDir(this.ConfigureDir)
-
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	return len(entries) == expectedFileCount, nil
-}
-
 func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContext) error {
 	graphs := this.Definition.generateDependencyGraphs()
 	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
-	alreadyConfigured, err := this.isConfigured(len(targetGroupMatrix))
-
-	if err != nil {
-		return err
-	}
-
-	if alreadyConfigured {
-		return nil
-	}
-
-	if err = os.RemoveAll(this.ConfigureDir); err != nil {
+	if err := os.RemoveAll(this.ConfigureDir); err != nil {
 		fmt.Printf("WARNING: could not remove directory %s: %s", this.ConfigureDir, err.Error())
 	}
 
-	if err = os.MkdirAll(this.ConfigureDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(this.ConfigureDir, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -92,7 +68,7 @@ func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContex
 			Targets: targetGroupIndices,
 		}
 
-		buildCommands, err := targetGroup.configure(this, definitionContexts)
+		targets, err := targetGroup.configure(this, definitionContexts)
 
 		if err != nil {
 			return err
@@ -107,8 +83,14 @@ func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContex
 
 		defer file.Close()
 
-		for _, buildCommand := range buildCommands {
-			_, err = file.WriteString(fmt.Sprintf("%s\n", buildCommand))
+		for _, target := range targets {
+			contents, err := target.buildCommand()
+
+			if err != nil {
+				return err
+			}
+
+			_, err = file.WriteString(fmt.Sprintf("%s\n", contents))
 
 			if err != nil {
 				return err
@@ -116,7 +98,7 @@ func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContex
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (this *DefinitionContext) Build(verbose bool) error {
@@ -150,6 +132,11 @@ func (this *DefinitionContext) Build(verbose bool) error {
 					log.Fatal(err)
 				}
 
+				if shellCommand[1] == "skip" {
+					fmt.Printf("[build] Skipping target %d of target group %s\n", targetIndex, filepath.Base(name))
+					continue
+				}
+
 				targetDef := this.Definition.Targets[targetIndex]
 
 				if err := targetDef.executeHooks("preBuild", this.DefinitionPath); err != nil {
@@ -163,10 +150,10 @@ func (this *DefinitionContext) Build(verbose bool) error {
 				}
 
 				if verbose {
-					shellCommand = slices.Insert(shellCommand, 2, "-v")
+					shellCommand = slices.Insert(shellCommand, 3, "-v")
 				}
 
-				command := exec.Command(shellCommand[1], shellCommand[2:]...)
+				command := exec.Command(shellCommand[2], shellCommand[3:]...)
 
 				if err := executeCommand(command, this.DefinitionPath); err != nil {
 					log.Fatal(err)

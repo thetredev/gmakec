@@ -1,7 +1,6 @@
 package gmakec
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -16,8 +15,8 @@ type TargetGroup struct {
 
 func (this *TargetGroup) configure(
 	definitionContext *DefinitionContext, definitionContexts *[]*DefinitionContext,
-) ([]string, error) {
-	buildCommands := []string{}
+) ([]Target, error) {
+	targets := []Target{}
 
 	for i := len(this.Targets) - 1; i >= 0; i-- {
 		targetIndex := this.Targets[i]
@@ -31,7 +30,6 @@ func (this *TargetGroup) configure(
 			return nil, err
 		}
 
-		// merge compiler flags
 		compilerDef, err := targetDef.Compiler.sanitize(&definitionContext.Definition.Compilers)
 
 		if err != nil {
@@ -44,16 +42,17 @@ func (this *TargetGroup) configure(
 			}
 		}
 
-		buildCommand := []string{
-			fmt.Sprintf("%d", targetIndex),
-			compilerDef.Object.Path,
+		targetDefCopy := targetDef
+		targetDefCopy.Compiler = *compilerDef
+
+		target := Target{
+			Definition: &targetDefCopy,
+			Index:      targetIndex,
 		}
 
-		buildCommand = append(buildCommand, compilerDef.Flags...)
-
 		for _, define := range targetDef.Defines {
-			buildCommand = append(buildCommand, compilerDef.Object.DefineFlag)
-			buildCommand = append(buildCommand, define)
+			target.Defines = append(target.Defines, compilerDef.Object.DefineFlag)
+			target.Defines = append(target.Defines, define)
 		}
 
 		for _, include := range targetDef.Includes {
@@ -83,34 +82,31 @@ func (this *TargetGroup) configure(
 						f, _ := os.Stat(match)
 
 						if f.IsDir() {
-							buildCommand = append(buildCommand, compilerDef.Object.IncludeSearchFlag)
-							buildCommand = append(buildCommand, match)
+							target.Includes = append(target.Includes, compilerDef.Object.IncludeSearchFlag)
+							target.Includes = append(target.Includes, match)
 						}
 					}
 				} else {
-					buildCommand = append(buildCommand, compilerDef.Object.IncludeSearchFlag)
-					buildCommand = append(buildCommand, includeString)
+					target.Includes = append(target.Includes, compilerDef.Object.IncludeSearchFlag)
+					target.Includes = append(target.Includes, includeString)
 				}
 			}
 		}
 
 		for _, link := range targetDef.Links {
 			if len(link.Path) > 0 {
-				buildCommand = append(buildCommand, compilerDef.Object.LinkSearchFlag)
+				target.Links = append(target.Links, compilerDef.Object.LinkSearchFlag)
 				linkPath := link.Path
 
 				if strings.Contains(linkPath, ":") {
 					linkPath, err = findRefTargetStringValue(linkPath, &targetDef, definitionContexts)
 				}
 
-				buildCommand = append(buildCommand, filepath.Dir(linkPath))
+				target.Links = append(target.Links, filepath.Dir(linkPath))
 			}
 
-			buildCommand = append(buildCommand, link.Link)
+			target.Links = append(target.Links, link.Link)
 		}
-
-		buildCommand = append(buildCommand, compilerDef.Object.OutputFlag)
-		buildCommand = append(buildCommand, targetDef.Output)
 
 		for _, source := range targetDef.Sources {
 			if len(source.Platform) > 0 && runtime.GOOS != source.Platform {
@@ -124,7 +120,7 @@ func (this *TargetGroup) configure(
 					return nil, err
 				}
 
-				buildCommand = append(buildCommand, globbed...)
+				target.Sources = append(target.Sources, globbed...)
 			} else if strings.Contains(source.Path, ":") {
 				refStringValue, err := findRefTargetStringValue(source.Path, &targetDef, definitionContexts)
 
@@ -132,18 +128,18 @@ func (this *TargetGroup) configure(
 					return nil, err
 				}
 
-				buildCommand = append(buildCommand, refStringValue)
+				target.Sources = append(target.Sources, refStringValue)
 			} else {
-				buildCommand = append(buildCommand, source.Path)
+				target.Sources = append(target.Sources, source.Path)
 			}
 		}
 
-		buildCommands = append(buildCommands, strings.Join(buildCommand, " "))
+		targets = append(targets, target)
 
 		if err = targetDef.executeHooks("postConfigure", definitionContext.DefinitionPath); err != nil {
 			return nil, err
 		}
 	}
 
-	return buildCommands, nil
+	return targets, nil
 }

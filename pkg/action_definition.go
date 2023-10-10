@@ -22,12 +22,10 @@ type ActionDefinition struct {
 
 func (this *ActionDefinition) commandWithShell(shellString string) *exec.Cmd {
 	commandPrefix := strings.Split(shellString, " ")
-	var command *exec.Cmd
+	command := exec.Command(commandPrefix[0])
 
 	if len(commandPrefix) > 1 {
-		command = exec.Command(commandPrefix[0], commandPrefix[1])
-	} else {
-		command = exec.Command(commandPrefix[0])
+		command.Args = append(command.Args, commandPrefix[1])
 	}
 
 	command.Args = append(command.Args, this.Command)

@@ -41,7 +41,7 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 	defContext := &DefinitionContext{
 		DefinitionPath: definitionPath,
 		Definition:     &globalDef,
-		ConfigureDir:   fmt.Sprintf("%s/%s", definitionPath, CONFIGURE_DIR),
+		ConfigureDir:   filepath.Join(definitionPath, CONFIGURE_DIR),
 	}
 
 	if err = defContext.Definition.sanitize(defContext); err != nil {
@@ -143,7 +143,7 @@ func (this *DefinitionContext) Build(verbose bool) error {
 					log.Fatal(err)
 				}
 
-				outputDir := filepath.Dir(fmt.Sprintf("%s/%s", this.DefinitionPath, targetDef.Output))
+				outputDir := filepath.Dir(filepath.Join(this.DefinitionPath, targetDef.Output))
 
 				if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 					log.Fatal(err)

@@ -2,6 +2,7 @@ package gmakec
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/fatih/structs"
 	"golang.org/x/exp/slices"
@@ -106,7 +107,7 @@ func (this *TargetDefinition) fieldStringValue(fieldName string, definitionConte
 		return "", fmt.Errorf("Could not find field `%s`", fieldName)
 	}
 
-	return fmt.Sprintf("%s/%s", definitionContext.DefinitionPath, field.Value().(string)), nil
+	return filepath.Join(definitionContext.DefinitionPath, field.Value().(string)), nil
 }
 
 func (this *TargetDefinition) fieldStringArrayValue(

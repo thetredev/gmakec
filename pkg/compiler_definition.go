@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -96,7 +97,7 @@ func (this *CompilerDefinition) sanitize(refCompilerDefinitions *[]CompilerDefin
 				found := false
 
 				for _, filePath := range paths {
-					fullPath := fmt.Sprintf("%s/%s", filePath, file)
+					fullPath := filepath.Join(filePath, file)
 					_, err := os.Stat(fullPath)
 
 					if err != nil {

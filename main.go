@@ -17,7 +17,7 @@ var definitionContexts []*gmakec.DefinitionContext
 
 func collectDefinitionContexts(defContext *gmakec.DefinitionContext) error {
 	for _, defImport := range defContext.Definition.Imports {
-		importedDefContext, err := gmakec.NewDefinitionContext(fmt.Sprintf("%s/%s", defImport, GLOBAL_DEFINITION_YAML))
+		importedDefContext, err := gmakec.NewDefinitionContext(filepath.Join(defImport, GLOBAL_DEFINITION_YAML))
 
 		if err != nil {
 			return err
@@ -94,7 +94,7 @@ func clean(context *cli.Context) error {
 
 	for _, dc := range definitionContexts {
 		for _, targetDef := range dc.Definition.Targets {
-			outputDir := fmt.Sprintf("%s/%s", dc.DefinitionPath, filepath.Dir(targetDef.Output))
+			outputDir := filepath.Join(dc.DefinitionPath, filepath.Dir(targetDef.Output))
 
 			if err = os.RemoveAll(outputDir); err != nil {
 				fmt.Printf("WARNING: could not remove directory %s: %s\n", outputDir, err.Error())

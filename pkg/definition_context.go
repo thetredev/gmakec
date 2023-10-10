@@ -55,10 +55,7 @@ func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContex
 	graphs := this.Definition.generateDependencyGraphs()
 	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
-	if err := os.RemoveAll(this.ConfigureDir); err != nil {
-		fmt.Printf("WARNING: could not remove directory %s: %s", this.ConfigureDir, err.Error())
-	}
-
+	RemovePath(this.ConfigureDir)
 	if err := os.MkdirAll(this.ConfigureDir, os.ModePerm); err != nil {
 		return err
 	}

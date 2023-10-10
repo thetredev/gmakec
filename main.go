@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -95,15 +94,10 @@ func clean(context *cli.Context) error {
 	for _, dc := range definitionContexts {
 		for _, targetDef := range dc.Definition.Targets {
 			outputDir := filepath.Join(dc.DefinitionPath, filepath.Dir(targetDef.Output))
-
-			if err = os.RemoveAll(outputDir); err != nil {
-				fmt.Printf("WARNING: could not remove directory %s: %s\n", outputDir, err.Error())
-			}
+			gmakec.RemovePath(outputDir)
 		}
 
-		if err = os.RemoveAll(dc.ConfigureDir); err != nil {
-			fmt.Printf("WARNING: could not remove directory %s: %s\n", dc.ConfigureDir, err.Error())
-		}
+		gmakec.RemovePath(dc.ConfigureDir)
 	}
 
 	return nil

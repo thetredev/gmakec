@@ -39,10 +39,7 @@ func (this *ConfigureFile) Execute(definitionContext *DefinitionContext) error {
 	}
 
 	defer source.Close()
-
-	if err = os.RemoveAll(this.Destination); err != nil {
-		log.Printf("WARNING: Could not remove destination file `%s`!\n", this.Destination)
-	}
+	RemovePath(this.Destination)
 
 	destination, err := os.Create(this.Destination)
 

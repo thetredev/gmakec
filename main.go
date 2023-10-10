@@ -110,13 +110,11 @@ func clean(context *cli.Context) error {
 }
 
 func rebuild(context *cli.Context) error {
-	var err error
-
-	if err = clean(context); err != nil {
+	if err := clean(context); err != nil {
 		return err
 	}
 
-	if err = build(context); err != nil {
+	if err := build(context); err != nil {
 		return err
 	}
 
@@ -124,13 +122,11 @@ func rebuild(context *cli.Context) error {
 }
 
 func reconfigure(context *cli.Context) error {
-	var err error
-
-	if err = clean(context); err != nil {
+	if err := clean(context); err != nil {
 		return err
 	}
 
-	if err = configure(context); err != nil {
+	if err := configure(context); err != nil {
 		return err
 	}
 

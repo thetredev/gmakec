@@ -139,7 +139,7 @@ func (this *DefinitionContext) Build(verbose bool) error {
 
 				targetDef := this.Definition.Targets[targetIndex]
 
-				if err := targetDef.executeHooks("preBuild", this.DefinitionPath); err != nil {
+				if err := targetDef.executeHooks("pre-build", this.DefinitionPath); err != nil {
 					log.Fatal(err)
 				}
 
@@ -159,7 +159,7 @@ func (this *DefinitionContext) Build(verbose bool) error {
 					log.Fatal(err)
 				}
 
-				if err := targetDef.executeHooks("postBuild", this.DefinitionPath); err != nil {
+				if err := targetDef.executeHooks("post-build", this.DefinitionPath); err != nil {
 					log.Fatal(err)
 				}
 			}

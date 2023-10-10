@@ -26,7 +26,7 @@ func (this *TargetGroup) configure(
 			return nil, err
 		}
 
-		if err := targetDef.executeHooks("preConfigure", definitionContext.DefinitionPath); err != nil {
+		if err := targetDef.executeHooks("pre-configure", definitionContext.DefinitionPath); err != nil {
 			return nil, err
 		}
 
@@ -136,7 +136,7 @@ func (this *TargetGroup) configure(
 
 		targets = append(targets, target)
 
-		if err = targetDef.executeHooks("postConfigure", definitionContext.DefinitionPath); err != nil {
+		if err = targetDef.executeHooks("post-configure", definitionContext.DefinitionPath); err != nil {
 			return nil, err
 		}
 	}

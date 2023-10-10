@@ -44,7 +44,7 @@ actions:
 
 hooks:
   - name: my-global-hook
-    step: preConfigure
+    step: pre-configure
     actions:
       - ref: python-version
       - command: echo From global hooks
@@ -61,7 +61,7 @@ targets:
       - path: main.c
     hooks:
       - ref: my-global-hook
-      - step: preConfigure
+      - step: pre-configure
         actions:
           - command: exit 1
             output:

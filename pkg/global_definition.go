@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 type GlobalDefinition struct {
@@ -110,11 +112,13 @@ func (this *GlobalDefinition) sanitize(definitionContext *DefinitionContext) err
 	return nil
 }
 
-func (this *GlobalDefinition) generateDependencyGraphs() [][]int {
+func (this *GlobalDefinition) generateDependencyGraphs(targets ...string) [][]int {
 	graphs := [][]int{}
 
-	for index := range this.Targets {
-		graphs = append(graphs, this.Targets[index].dependencyGraph(index, &this.Targets))
+	for index, targetDef := range this.Targets {
+		if len(targets) == 0 || slices.Contains(targets, targetDef.Name) {
+			graphs = append(graphs, this.Targets[index].dependencyGraph(index, &this.Targets))
+		}
 	}
 
 	return graphs

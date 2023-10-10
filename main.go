@@ -34,6 +34,8 @@ func collectDefinitionContexts(defContext *gmakec.DefinitionContext) error {
 }
 
 func configure(context *cli.Context) error {
+	targets := context.Args().Slice()
+
 	definitionContexts = make([]*gmakec.DefinitionContext, 0)
 	defContext, err := gmakec.NewDefinitionContext(GLOBAL_DEFINITION_YAML)
 
@@ -48,7 +50,7 @@ func configure(context *cli.Context) error {
 	}
 
 	for _, dc := range definitionContexts {
-		err = dc.Configure(&definitionContexts)
+		err = dc.Configure(&definitionContexts, targets...)
 
 		if err != nil {
 			return err

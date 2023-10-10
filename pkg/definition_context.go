@@ -51,8 +51,8 @@ func NewDefinitionContext(path string) (*DefinitionContext, error) {
 	return defContext, nil
 }
 
-func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContext) error {
-	graphs := this.Definition.generateDependencyGraphs()
+func (this *DefinitionContext) Configure(definitionContexts *[]*DefinitionContext, targets ...string) error {
+	graphs := this.Definition.generateDependencyGraphs(targets...)
 	targetGroupMatrix := generateTargetGroupMatrix(graphs)
 
 	RemovePath(this.ConfigureDir)

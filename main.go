@@ -139,6 +139,7 @@ func reconfigure(context *cli.Context) error {
 
 func main() {
 	app := &cli.App{
+		DefaultCommand: "build",
 		Commands: []*cli.Command{
 			{
 				Name:   "configure",

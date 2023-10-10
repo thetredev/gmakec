@@ -19,7 +19,7 @@ targets:
     sources:
       - path: mylib.c
     includes:
-      - .
+      - "*.h"
     output: build/myownlib.o
 
   - name: libso

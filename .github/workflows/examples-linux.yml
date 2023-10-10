@@ -1,0 +1,28 @@
+name: Build and run all examples (Linux host, Linux targets)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-run-examples:
+    runs-on: ubuntu-22.04
+    container:
+      # this image includes go as well as gcc
+      image: mcr.microsoft.com/vscode/devcontainers/go:1.21-bookworm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Git safe directory
+        run: git config --global --add safe.directory /__w/gmakec/gmakec
+
+      - name: Complete checkout
+        run: |
+          git fetch origin main
+          git checkout main
+
+      - name: Build and run examples
+        run: ./scripts/build-and-run-examples.sh
